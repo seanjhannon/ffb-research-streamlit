@@ -66,7 +66,7 @@ with col3: # by defining cols out of order I can avoid referencing variables bef
 # Filter Data here and apply scoring format before displaying
 filtered_data = weekly_data.query(f"player_display_name == @selected_name")
 filtered_data["calc_fantasy_points"] = filtered_data.apply(
-    lambda row: scoring.calculate_fantasy_points(row, selected_scoring_format_name, scoring.stat_mapping_nfl_py),
+    lambda row: scoring.calculate_fantasy_points(row, selected_scoring_format, scoring.stat_mapping_nfl_py),
     axis=1
 )
 
