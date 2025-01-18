@@ -140,17 +140,45 @@ def calculate_fantasy_points(
                     f"{column} : {stats_row[column]}, {scoring_attribute} : {getattr(scoring_format, scoring_attribute)}")
     return total_points
 
+
 def calculate_fantasy_points_by_category(
-        stats_row: pd.Series,
+        stats_df: pd.DataFrame,
         scoring_format: ScoringFormat,
-        stat_mapping: dict,
-        debug=False) -> dict:
-    """Calculates the total points scored by one row of stats, returning a dict mapping each scoring category to its respective points. """
-    points_by_category = {}
+        stat_mapping: dict) -> pd.Series:
+    """Calculates the total points scored across all players for each category, returning a Series with summed points per category."""
+
+    # Initialize a dictionary to hold the points values for each category
+    total_points_by_category = {}
+
+    # Loop through stat_mapping and calculate the total points for each category
     for column, scoring_attribute in stat_mapping.items():
-        if column in stats_row and hasattr(scoring_format, scoring_attribute):
-            points_by_category[scoring_attribute] = stats_row[column] * getattr(scoring_format, scoring_attribute)
-            if debug:
-                print(
-                    f"{column} : {stats_row[column]}, {scoring_attribute} : {getattr(scoring_format, scoring_attribute)}")
-    return points_by_category
+        if column in stats_df.columns:
+            # Multiply the relevant column by the scoring format value and sum the result
+            total_points_by_category[scoring_attribute] = (
+                        stats_df[column] * getattr(scoring_format, scoring_attribute)).sum()
+
+    # Create a cleaner output with readable category names
+    readable_category_names = {
+        'pass_yards_value': 'Passing Yards',
+        'pass_tds_value': 'Passing TDs',
+        'pass_ints_value': 'Passing INTs',
+        'rush_yards_value': 'Rushing Yards',
+        'rush_tds_value': 'Rushing TDs',
+        'receptions_value': 'Receptions',
+        'rec_yards_value': 'Receiving Yards',
+        'rec_tds_value': 'Receiving TDs',
+        'two_point_conversions_value': 'Two-Point Conversions',
+        'fumble_recovery_td_value': 'Fumble Recovery TDs',
+        'fumble_lost_value': 'Fumbles Lost'
+    }
+
+    # Map the points categories to more readable names
+    readable_total_points_by_category = {
+        readable_category_names.get(key, key): value
+        for key, value in total_points_by_category.items()
+    }
+
+    # Convert to pandas Series for better readability
+    total_points_series = pd.Series(readable_total_points_by_category)
+
+    return total_points_series
