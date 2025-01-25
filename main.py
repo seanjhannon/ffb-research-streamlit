@@ -3,6 +3,7 @@ import nfl_data_py as nfl
 import scoring
 import plotly.graph_objects as go
 
+
 import pandas as pd
 
 st.set_page_config(layout="wide")
@@ -89,7 +90,7 @@ with col1:
     st.image(filtered_data['headshot_url'].iloc[0])
 
 with col2:
-    player_first_name, player_last_name = selected_name.split(' ')
+    player_first_name, player_last_name = selected_name.split(' ')[0], ' '.join(selected_name.split(' ')[1:])
     st.subheader(player_first_name)
     st.header(player_last_name)
 
@@ -144,8 +145,22 @@ fig.update_layout(
     template='plotly_dark'  # Optional: adds a dark theme to the chart
 )
 
-# Display the radar chart in Streamlit
-st.plotly_chart(fig)
+radar, bar = st.columns(2)
+
+with radar:
+    # Display the radar chart in Streamlit
+    st.plotly_chart(fig)
+
+
+with bar:
+    # Title
+    st.title("Self-Service Bar Chart")
+
+    # Dropdown to select y-axis column
+    y_column = st.selectbox("Select a column to graph (y-axis):", options=filtered_data.columns.difference(["week"]))
+
+    # Plotting with Streamlit native bar chart
+    st.bar_chart(data=filtered_data.set_index("week")[[y_column]])
 
 # Optional: Display as a simple chart
 st.bar_chart(selected_weeks)
