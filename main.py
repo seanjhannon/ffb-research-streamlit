@@ -145,6 +145,18 @@ fig.update_layout(
     template='plotly_dark'  # Optional: adds a dark theme to the chart
 )
 
+## First draft - scoring row contains everything from radar
+st.header('Scoring Stats')
+scoring_kpis = st.columns(len(categories))
+for i in range(len(categories)):
+    scoring_kpis[i].write(categories[i])
+    scoring_kpis[i].write(values[i])
+
+
+
+
+
+
 radar, bar = st.columns(2)
 
 with radar:
