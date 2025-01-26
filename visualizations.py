@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 import data_loader
+import numpy as np
 
 def Header():
     """ Displays header content and passes player down into subsequent components"""
@@ -90,15 +91,92 @@ def ScoringKPIs(points_by_stat:pd.Series):
         scoring_kpis_cols[i].write(values[i])
 
 
-def ScoringKPIs(stat_totals:pd.DataFrame, position_ranks:pd.DataFrame):
+def ScoringKPIs(stat_totals:pd.DataFrame,
+                position_ranks:pd.DataFrame,
+                position: str
+                ):
     # Rec, rec yds, rec tds
     player_name = stat_totals['player_display_name'].values[0]
-
     player_ranks = position_ranks.query('player_display_name == @player_name')
 
-    scoring_kpis_cols = st.columns(3)
-    with scoring_kpis_cols[0]:
-        st.subheader('Receiving Yards')
-        st.write(stat_totals['receiving_yards'].values[0],
-                 int(player_ranks['receiving_yards'].values[0]))
+    if position == 'WR':
 
+        scoring_stats = {
+            'calc_fantasy_points': 'Fantasy Points',
+            'receiving_yards': 'Receiving Yards',
+            'receiving_tds': 'Receiving TDs',
+            'receptions': 'Receptions'
+    }
+
+        opportunity_stats = {
+            'targets': 'Targets',
+            'target_share': 'Target Share',
+            'wopr': 'WOPR'
+        }
+        advanced_stats = {
+            'receiving_epa': 'Receiving EPA',
+            'racr': 'RACR'
+        }
+
+    scoring_kpis_cols = st.columns([2, 1, 1])
+
+    with scoring_kpis_cols[0]:
+        st.markdown("<h2 style='text-align: center;'>Production </h2>", unsafe_allow_html=True)
+        columns = st.columns(len(scoring_stats))
+        for col, stat in zip(columns, scoring_stats):
+            with col:
+                kpi_card(
+                    scoring_stats[stat],
+                    value=stat_totals[stat].iloc[0],
+                    rank=player_ranks[stat].iloc[0],
+                )
+
+    with scoring_kpis_cols[1]:
+        st.markdown("<h2 style='text-align: center;'>Opportunity </h2>", unsafe_allow_html=True)
+        columns = st.columns(len(opportunity_stats))
+        for col, stat in zip(columns, opportunity_stats):
+            with col:
+                kpi_card(
+                    opportunity_stats[stat],
+                    value=stat_totals[stat].iloc[0],
+                    rank=player_ranks[stat].iloc[0],
+                )
+    with scoring_kpis_cols[2]:
+        st.markdown("<h2 style='text-align: center;'>Advanced </h2>", unsafe_allow_html=True)
+        columns = st.columns(len(advanced_stats))
+        for col, stat in zip(columns, advanced_stats):
+            with col:
+                kpi_card(
+                    advanced_stats[stat],
+                    value=stat_totals[stat].iloc[0],
+                    rank=player_ranks[stat].iloc[0],
+                )
+
+
+
+
+def kpi_card(name: str, value, rank: int):
+    """
+    Display a simple KPI card using plain Markdown.
+
+    Args:
+    - name (str): The name of the KPI.
+    - value (str): The value of the KPI.
+    - rank (str): The rank of the KPI relative to the competition.
+    """
+
+    if type(value) == np.float32:
+        value = round(float(value), 2)
+
+    rank_color = "green" if rank <= 10 else "white"
+
+    st.markdown(
+        f"""
+        <div style="text-align: center;">
+            <strong>{name}</strong><br>
+            <span style="font-size: 2em;">{value}</span><br>
+            <em> Rank: <span style='color:{rank_color};'>{int(rank)}</span> </em>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )

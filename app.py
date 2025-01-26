@@ -28,6 +28,10 @@ selected_player_and_range["calc_fantasy_points"] = selected_player_and_range.app
     lambda row: scoring.calculate_fantasy_points(row, SCORING_FORMAT, STAT_MAPPING),
     axis=1
 )
+positional_data["calc_fantasy_points"] = selected_player_and_range.apply(
+    lambda row: scoring.calculate_fantasy_points(row, SCORING_FORMAT, STAT_MAPPING),
+    axis=1
+)
 
 week_range = range(week_boundaries[0], week_boundaries[1]+1)
 
@@ -40,14 +44,11 @@ points_by_stat = scoring.calculate_fantasy_points_by_category(selected_player_an
 positional_totals = scoring.calculate_total_stats(positional_data.query('week in @week_range'))
 position_ranks = scoring.make_position_ranks(positional_totals)
 
-st.write(stat_totals)
-
-
-
-
 scoring_kpis_container = st.container()
 with scoring_kpis_container:
-    viz.ScoringKPIs(stat_totals, position_ranks)
+    viz.ScoringKPIs(stat_totals,
+                    position_ranks,
+                    selected_player_data['position'].values[0])
 
 
 
