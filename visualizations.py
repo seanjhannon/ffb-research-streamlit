@@ -35,6 +35,7 @@ def Header():
         display_names = year_data['player_display_name'].unique().tolist()
         selected_player_name = name_selector(display_names)
 
+
     selected_player_data = year_data.query(f"player_display_name == @selected_player_name")
     # This part is all data source-specific, would need to change to accommodate a different API
     selected_player_headshot = selected_player_data['headshot_url'].iloc[0]
@@ -43,6 +44,7 @@ def Header():
     selected_player_position = selected_player_data['position'].iloc[0]
     selected_player_team = selected_player_data['recent_team'].iloc[-1] #gets most recent value in case of a trade
 
+    positional_data = year_data.query(f"position == @selected_player_position")
 
     with headshot_col:
         headshot(selected_player_headshot)
@@ -54,7 +56,7 @@ def Header():
              selected_player_team
              )
 
-    return selected_player_data
+    return positional_data, selected_player_data
 
 
 def WeekSelector(selected_player_data: pd.DataFrame):
@@ -64,15 +66,39 @@ def WeekSelector(selected_player_data: pd.DataFrame):
         return selected_player_data
     else:
         # Handle normal case with a range of weeks
-        start_num, end_num = st.slider(  # will eventually need to handle multiple years
+        start_week, end_week = st.slider(  # will eventually need to handle multiple years
             "Select a range of weeks",
             min_value=min(all_weeks),
             max_value=max(all_weeks),
             value=(min(all_weeks), max(all_weeks)),  # Default to full range
             step=1
         )
-    selected_weeks = [num for num in all_weeks if start_num <= num <= end_num]
+    selected_weeks = [num for num in all_weeks if start_week <= num <= end_week]
     # filter data by above conditions for use in graphs
     selected_player_and_range = selected_player_data.query("week in @selected_weeks")
 
-    return selected_player_and_range
+    return (start_week, end_week), selected_player_and_range
+
+
+def ScoringKPIs(points_by_stat:pd.Series):
+    nonzero_points_series = points_by_stat[points_by_stat != 0]
+    categories = nonzero_points_series.index.tolist()  # List of categories
+    values = nonzero_points_series.values.tolist()  # List of corresponding values
+    scoring_kpis_cols = st.columns(len(categories))
+    for i in range(len(categories)):
+        scoring_kpis_cols[i].write(categories[i])
+        scoring_kpis_cols[i].write(values[i])
+
+
+def ScoringKPIs(stat_totals:pd.DataFrame, position_ranks:pd.DataFrame):
+    # Rec, rec yds, rec tds
+    player_name = stat_totals['player_display_name'].values[0]
+
+    player_ranks = position_ranks.query('player_display_name == @player_name')
+
+    scoring_kpis_cols = st.columns(3)
+    with scoring_kpis_cols[0]:
+        st.subheader('Receiving Yards')
+        st.write(stat_totals['receiving_yards'].values[0],
+                 int(player_ranks['receiving_yards'].values[0]))
+

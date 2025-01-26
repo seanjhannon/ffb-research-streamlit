@@ -124,20 +124,18 @@ stat_mapping_nfl_py = {
     'receiving_2pt_conversions': 'two_point_conversions_value',
 }
 
+
+
 def calculate_total_stats(stats_df: pd.DataFrame) -> pd.DataFrame:
+
     # Select numeric columns
     numeric_df = stats_df.select_dtypes(include='number')
+    numeric_df['player_display_name'] = stats_df['player_display_name']
 
-    # Compute the total for each numeric column
-    totals = numeric_df.sum()
+    grouped = numeric_df.groupby('player_display_name',as_index=False).sum()
 
-    # Rename the columns to include the 'total_' prefix
-    totals.index = ['total_' + col for col in totals.index]
+    return grouped
 
-    # Convert the Series back into a DataFrame with one row
-    result_df = totals.to_frame().T
-
-    return result_df
 
 def calculate_fantasy_points(
         stats_row: pd.Series,
@@ -196,3 +194,13 @@ def calculate_fantasy_points_by_category(
     total_points_series = pd.Series(readable_total_points_by_category)
 
     return total_points_series
+
+
+
+def make_position_ranks(totals_df):
+    # Rank each stat column among athletes
+    ranked_df = totals_df.copy()
+    for column in totals_df.columns:
+        if column != 'player_display_name':  # Assuming there's a column 'athlete' for athlete names
+            ranked_df[column] = totals_df[column].rank(ascending=False, method='dense')
+    return ranked_df
