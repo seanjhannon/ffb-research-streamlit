@@ -124,6 +124,20 @@ stat_mapping_nfl_py = {
     'receiving_2pt_conversions': 'two_point_conversions_value',
 }
 
+def calculate_total_stats(stats_df: pd.DataFrame) -> pd.DataFrame:
+    # Select numeric columns
+    numeric_df = stats_df.select_dtypes(include='number')
+
+    # Compute the total for each numeric column
+    totals = numeric_df.sum()
+
+    # Rename the columns to include the 'total_' prefix
+    totals.index = ['total_' + col for col in totals.index]
+
+    # Convert the Series back into a DataFrame with one row
+    result_df = totals.to_frame().T
+
+    return result_df
 
 def calculate_fantasy_points(
         stats_row: pd.Series,

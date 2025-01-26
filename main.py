@@ -146,15 +146,16 @@ fig.update_layout(
 )
 
 ## First draft - scoring row contains everything from radar
+# total_stats = scoring.calculate_total_stats((filtered_data))
+
+
 st.header('Scoring Stats')
-scoring_kpis = st.columns(len(categories))
-for i in range(len(categories)):
-    scoring_kpis[i].write(categories[i])
-    scoring_kpis[i].write(values[i])
-
-
-
-
+scoring_kpis = st.container()
+with scoring_kpis:
+    scoring_kpis_cols = st.columns(len(categories))
+    for i in range(len(categories)):
+        scoring_kpis_cols[i].write(categories[i])
+        scoring_kpis_cols[i].write(values[i])
 
 
 radar, bar = st.columns(2)
@@ -174,7 +175,5 @@ with bar:
     # Plotting with Streamlit native bar chart
     st.bar_chart(data=filtered_data.set_index("week")[[y_column]])
 
-# Optional: Display as a simple chart
-st.bar_chart(selected_weeks)
 
 st.write(filtered_data)
