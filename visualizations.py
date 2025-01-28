@@ -2,6 +2,8 @@ import pandas as pd
 import streamlit as st
 import data_loader
 import numpy as np
+import plotly.graph_objects as go
+
 
 def Header():
     """ Displays header content and passes player down into subsequent components"""
@@ -100,13 +102,12 @@ def ScoringKPIs(stat_totals:pd.DataFrame,
     player_ranks = position_ranks.query('player_display_name == @player_name')
 
     if position == 'WR':
-
         scoring_stats = {
             'calc_fantasy_points': 'Fantasy Points',
             'receiving_yards': 'Receiving Yards',
             'receiving_tds': 'Receiving TDs',
             'receptions': 'Receptions'
-    }
+        }
 
         opportunity_stats = {
             'targets': 'Targets',
@@ -117,7 +118,23 @@ def ScoringKPIs(stat_totals:pd.DataFrame,
             'receiving_epa': 'Receiving EPA',
             'racr': 'RACR'
         }
+    elif position == 'RB':
+        scoring_stats = {
+            'calc_fantasy_points': 'Fantasy Points',
+            'receiving_yards': 'Receiving Yards',
+            'receiving_tds': 'Receiving TDs',
+            'receptions': 'Receptions'
+        }
 
+        opportunity_stats = {
+            'targets': 'Targets',
+            'target_share': 'Target Share',
+            'wopr': 'WOPR'
+        }
+        advanced_stats = {
+            'receiving_epa': 'Receiving EPA',
+            'racr': 'RACR'
+        }
     scoring_kpis_cols = st.columns([2, 1, 1])
 
     with scoring_kpis_cols[0]:
@@ -180,3 +197,52 @@ def kpi_card(name: str, value, rank: int):
         """,
         unsafe_allow_html=True,
     )
+
+def Radar(points_by_stat:pd.DataFrame):
+    nonzero_points_series = points_by_stat[points_by_stat != 0]
+
+    # Extract categories and values programmatically
+    categories = nonzero_points_series.index.tolist()  # List of categories
+    values = nonzero_points_series.values.tolist()  # List of corresponding values
+
+    # Create a radar chart with P
+    # Create a radar chart with Plotly
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatterpolar(
+        r=values,
+        theta=categories,
+        fill='toself',
+        name='Fantasy Scoring'
+    ))
+
+    # Dynamically adjust the range based on the values
+    max_value = max(values)
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(
+                visible=True,
+                range=[0, max_value * 1.1]  # Slightly expand the range for aesthetics
+            )
+        ),
+        showlegend=False,
+        title="Fantasy Football Scoring Breakdown",
+        template='plotly_dark'  # Optional: adds a dark theme to the chart
+    )
+    st.write(fig)
+
+def CustomBar(player_data):
+    # Title
+    st.title("Self-Service Bar Chart")
+
+    # Dropdown to select y-axis column
+    y_column = st.selectbox("Select a column to graph (y-axis):", options=player_data.columns.difference(["week"]))
+
+    # Plotting with Streamlit native bar chart
+    st.bar_chart(data=player_data.set_index("week")[[y_column]])
+
+
+
+
+
+

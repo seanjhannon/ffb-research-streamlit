@@ -28,7 +28,8 @@ selected_player_and_range["calc_fantasy_points"] = selected_player_and_range.app
     lambda row: scoring.calculate_fantasy_points(row, SCORING_FORMAT, STAT_MAPPING),
     axis=1
 )
-positional_data["calc_fantasy_points"] = selected_player_and_range.apply(
+
+positional_data["calc_fantasy_points"] = positional_data.apply(
     lambda row: scoring.calculate_fantasy_points(row, SCORING_FORMAT, STAT_MAPPING),
     axis=1
 )
@@ -50,6 +51,16 @@ with scoring_kpis_container:
                     position_ranks,
                     selected_player_data['position'].values[0])
 
+charts_container = st.container()
+with charts_container:
+    col1, col2 = st.columns(2)
+
+    with col1:
+        radar_container = st.container()
+        with radar_container:
+            viz.Radar(points_by_stat)
+
+    with col2:
+        viz.CustomBar(selected_player_and_range)
 
 
-st.write(selected_player_and_range)

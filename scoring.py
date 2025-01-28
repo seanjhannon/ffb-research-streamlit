@@ -150,7 +150,7 @@ def calculate_fantasy_points(
             if debug:
                 print(
                     f"{column} : {stats_row[column]}, {scoring_attribute} : {getattr(scoring_format, scoring_attribute)}")
-    return total_points
+    return round(total_points, 2)
 
 
 def calculate_fantasy_points_by_category(
