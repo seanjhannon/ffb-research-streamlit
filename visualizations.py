@@ -83,24 +83,8 @@ def WeekSelector(selected_player_data: pd.DataFrame):
     return (start_week, end_week), selected_player_and_range
 
 
-def ScoringKPIs(points_by_stat:pd.Series):
-    nonzero_points_series = points_by_stat[points_by_stat != 0]
-    categories = nonzero_points_series.index.tolist()  # List of categories
-    values = nonzero_points_series.values.tolist()  # List of corresponding values
-    scoring_kpis_cols = st.columns(len(categories))
-    for i in range(len(categories)):
-        scoring_kpis_cols[i].write(categories[i])
-        scoring_kpis_cols[i].write(values[i])
 
-
-def ScoringKPIs(stat_totals:pd.DataFrame,
-                position_ranks:pd.DataFrame,
-                position: str
-                ):
-    # Rec, rec yds, rec tds
-    player_name = stat_totals['player_display_name'].values[0]
-    player_ranks = position_ranks.query('player_display_name == @player_name')
-
+def get_position_kpis(position:str):
     if position == 'WR':
         scoring_stats = {
             'calc_fantasy_points': 'Fantasy Points',
@@ -111,13 +95,14 @@ def ScoringKPIs(stat_totals:pd.DataFrame,
 
         opportunity_stats = {
             'targets': 'Targets',
-            'target_share': 'Target Share',
+            'target_share': 'Avg. Target Share',
             'wopr': 'WOPR'
         }
         advanced_stats = {
             'receiving_epa': 'Receiving EPA',
             'racr': 'RACR'
         }
+
     elif position == 'RB':
         scoring_stats = {
             'calc_fantasy_points': 'Fantasy Points',
@@ -128,45 +113,78 @@ def ScoringKPIs(stat_totals:pd.DataFrame,
 
         opportunity_stats = {
             'targets': 'Targets',
-            'target_share': 'Target Share',
+            'target_share': 'Average Target Share',
             'wopr': 'WOPR'
         }
+
         advanced_stats = {
-            'receiving_epa': 'Receiving EPA',
+            'receiving_epa': 'Average Receiving EPA',
             'racr': 'RACR'
         }
-    scoring_kpis_cols = st.columns([2, 1, 1])
+
+
+    return scoring_stats, opportunity_stats, advanced_stats
+
+
+
+
+def ScoringKPIs(stat_totals:pd.DataFrame,
+                stat_averages,
+                position_ranks:pd.DataFrame,
+                weekly_player_stats: st
+                ):
+    # Rec, rec yds, rec tds
+    player_name = weekly_player_stats['player_display_name'].values[0]
+    player_ranks = position_ranks.query('player_display_name == @player_name')
+    position = weekly_player_stats['position'].values[0]
+
+    scoring_stats, opportunity_stats, advanced_stats = get_position_kpis(position)
+
+    scoring_kpis_cols = st.columns([4, 3, 2])
 
     with scoring_kpis_cols[0]:
         st.markdown("<h2 style='text-align: center;'>Production </h2>", unsafe_allow_html=True)
         columns = st.columns(len(scoring_stats))
         for col, stat in zip(columns, scoring_stats):
+            if scoring_stats[stat].startswith('Average'):
+                stat_value = round(stat_averages[stat])
+            else:
+                stat_value= round(stat_totals[stat], 2)
             with col:
                 kpi_card(
                     scoring_stats[stat],
-                    value=stat_totals[stat].iloc[0],
-                    rank=player_ranks[stat].iloc[0],
+                    value=stat_value,
+                    rank=player_ranks[stat].iloc[0], # This now doesn't work
                 )
 
     with scoring_kpis_cols[1]:
         st.markdown("<h2 style='text-align: center;'>Opportunity </h2>", unsafe_allow_html=True)
         columns = st.columns(len(opportunity_stats))
         for col, stat in zip(columns, opportunity_stats):
+            if opportunity_stats[stat].startswith('Average'):
+                stat_value = round(stat_averages[stat])
+            else:
+                stat_value= round(stat_totals[stat], 2)
             with col:
                 kpi_card(
                     opportunity_stats[stat],
-                    value=stat_totals[stat].iloc[0],
-                    rank=player_ranks[stat].iloc[0],
+                    value=stat_value,
+                    rank=player_ranks[stat].iloc[0], # This now doesn't work
                 )
+
     with scoring_kpis_cols[2]:
         st.markdown("<h2 style='text-align: center;'>Advanced </h2>", unsafe_allow_html=True)
         columns = st.columns(len(advanced_stats))
         for col, stat in zip(columns, advanced_stats):
+            if advanced_stats[stat].startswith('Average'):
+                stat_value = round(stat_averages[stat])
+            else:
+                stat_value= round(stat_totals[stat], 2)
             with col:
                 kpi_card(
                     advanced_stats[stat],
-                    value=stat_totals[stat].iloc[0],
-                    rank=player_ranks[stat].iloc[0],
+                    value=stat_value,
+                    rank=player_ranks[stat].iloc[0], # This now doesn't work
                 )
 
 
