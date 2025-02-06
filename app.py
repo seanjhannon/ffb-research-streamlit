@@ -9,12 +9,6 @@ SCORING_FORMAT = scoring.PPRScoringFormat()
 
 st.set_page_config(layout="wide")
 
-# state = {'weekly_player_stats': None,
-#          'position_ranks': None,
-#          'player_totals': None,
-#          'player_averages': None,
-#          }
-
 # Display the header - contains headshot, name, and week/player selectors
 header_container = st.container(border=True)
 with header_container:

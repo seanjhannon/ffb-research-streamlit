@@ -85,6 +85,7 @@ def WeekSelector(selected_player_data: pd.DataFrame):
 
 
 def get_position_kpis(position:str):
+
     if position == 'WR' or 'TE':
         scoring_stats = {
             'calc_fantasy_points': 'Fantasy Points',
@@ -104,7 +105,8 @@ def get_position_kpis(position:str):
             'racr': 'RACR'
         }
 
-    elif position == 'RB':
+    if position == 'RB':
+
         scoring_stats = {
             'calc_fantasy_points': 'Fantasy Points',
             'rushing_yards': 'Rushing Yards',
@@ -122,15 +124,57 @@ def get_position_kpis(position:str):
             'rushing_epa': 'Average Rushing EPA',
         }
 
+    else : #position is QB
+        scoring_stats = {
+            'calc_fantasy_points': 'Fantasy Points',
+            'passing_yards': 'Passing Yards',
+            'passing_tds': 'Passing TDs',
+            'rushing_yards': 'Rushing Yards',
+            'rushing_tds': 'Rushing TDs',
+        }
+
+        opportunity_stats = {
+            'attempts': 'Attempts',
+            'passing_air_yards': 'Targets',
+            'carries': 'Carries'
+        }
+
+        advanced_stats = {
+            'passing_epa': 'Average Passing EPA',
+            'pacr': 'PACR'
+        }
 
     return scoring_stats, opportunity_stats, advanced_stats
 
 
 
+def make_cards_from_stats(stat_category:str,
+                          stat_dict,
+                          player_ranks,
+                          stat_averages,
+                          stat_totals,
+                          ):
+    st.markdown(f"<h2 style='text-align: center;'>{stat_category} </h2>", unsafe_allow_html=True)
+    # if len(stat_dict) <= 3:
+    if len(stat_dict):
+        columns = st.columns(len(stat_dict))
+        for col, stat in zip(columns, stat_dict):
+            if stat_dict[stat].startswith('Average'):
+                stat_value = round(stat_averages[stat])
+            else:
+                stat_value= round(stat_totals[stat], 2)
+            with col:
+                kpi_card(
+                    stat_dict[stat],
+                    value=stat_value,
+                    rank=player_ranks[stat].iloc[0], # This now doesn't work
+                )
+
 
 def ScoringKPIs(stat_totals:pd.DataFrame,
                 stat_averages,
                 position_ranks:pd.DataFrame,
+
                 weekly_player_stats: st
                 ):
     # Rec, rec yds, rec tds
@@ -140,22 +184,17 @@ def ScoringKPIs(stat_totals:pd.DataFrame,
 
     scoring_stats, opportunity_stats, advanced_stats = get_position_kpis(position)
 
+    st.write(advanced_stats)
+
     scoring_kpis_cols = st.columns(3) # needs adjustment
 
     with scoring_kpis_cols[0]:
-        st.markdown("<h2 style='text-align: center;'>Production </h2>", unsafe_allow_html=True)
-        columns = st.columns(len(scoring_stats))
-        for col, stat in zip(columns, scoring_stats):
-            if scoring_stats[stat].startswith('Average'):
-                stat_value = round(stat_averages[stat])
-            else:
-                stat_value= round(stat_totals[stat], 2)
-            with col:
-                kpi_card(
-                    scoring_stats[stat],
-                    value=stat_value,
-                    rank=player_ranks[stat].iloc[0], # This now doesn't work
-                )
+        make_cards_from_stats(stat_category='Production',
+                              stat_dict=scoring_stats,
+                              player_ranks=player_ranks,
+                              stat_averages=stat_averages,
+                              stat_totals=stat_totals)
+
 
     with scoring_kpis_cols[1]:
         st.markdown("<h2 style='text-align: center;'>Opportunity </h2>", unsafe_allow_html=True)
@@ -215,6 +254,9 @@ def kpi_card(name: str, value, rank: int):
         """,
         unsafe_allow_html=True,
     )
+
+
+
 
 def Radar(points_by_stat:pd.DataFrame):
     nonzero_points_series = points_by_stat[points_by_stat != 0]
