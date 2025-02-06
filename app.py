@@ -56,7 +56,7 @@ positional_totals = scoring.calculate_total_stats(st.session_state.position_rank
 st.session_state.position_ranks = scoring.make_position_ranks(positional_totals)
 
 
-# st.write(st.session_state.pla)
+st.write(st.session_state.weekly_player_stats)
 
 scoring_kpis_container = st.container()
 with scoring_kpis_container:
@@ -75,6 +75,6 @@ with charts_container:
             viz.Radar(points_by_stat)
 
     with col2:
-        viz.CustomBar(selected_player_and_range)
+        viz.CustomBar(st.session_state.weekly_player_stats)
 
 

@@ -85,25 +85,7 @@ def WeekSelector(selected_player_data: pd.DataFrame):
 
 
 def get_position_kpis(position:str):
-    if position == 'WR':
-        scoring_stats = {
-            'calc_fantasy_points': 'Fantasy Points',
-            'receiving_yards': 'Receiving Yards',
-            'receiving_tds': 'Receiving TDs',
-            'receptions': 'Receptions'
-        }
-
-        opportunity_stats = {
-            'targets': 'Targets',
-            'target_share': 'Avg. Target Share',
-            'wopr': 'WOPR'
-        }
-        advanced_stats = {
-            'receiving_epa': 'Receiving EPA',
-            'racr': 'RACR'
-        }
-
-    elif position == 'RB':
+    if position == 'WR' or 'TE':
         scoring_stats = {
             'calc_fantasy_points': 'Fantasy Points',
             'receiving_yards': 'Receiving Yards',
@@ -114,12 +96,30 @@ def get_position_kpis(position:str):
         opportunity_stats = {
             'targets': 'Targets',
             'target_share': 'Average Target Share',
+            'air_yards_share': 'Average Air Yards Share',
             'wopr': 'WOPR'
+        }
+        advanced_stats = {
+            'receiving_epa': 'Receiving EPA',
+            'racr': 'RACR'
+        }
+
+    elif position == 'RB':
+        scoring_stats = {
+            'calc_fantasy_points': 'Fantasy Points',
+            'rushing_yards': 'Rushing Yards',
+            'rushing_tds': 'Rushing TDs',
+            'receiving_yards': 'Receiving Yards',
+            'receiving_tds': 'Receiving TDs',
+        }
+
+        opportunity_stats = {
+            'carries': 'Carries',
+            'targets': 'Targets',
         }
 
         advanced_stats = {
-            'receiving_epa': 'Average Receiving EPA',
-            'racr': 'RACR'
+            'rushing_epa': 'Average Rushing EPA',
         }
 
 
@@ -140,7 +140,7 @@ def ScoringKPIs(stat_totals:pd.DataFrame,
 
     scoring_stats, opportunity_stats, advanced_stats = get_position_kpis(position)
 
-    scoring_kpis_cols = st.columns([4, 3, 2])
+    scoring_kpis_cols = st.columns(3) # needs adjustment
 
     with scoring_kpis_cols[0]:
         st.markdown("<h2 style='text-align: center;'>Production </h2>", unsafe_allow_html=True)
@@ -253,8 +253,11 @@ def CustomBar(player_data):
     # Title
     st.title("Self-Service Bar Chart")
 
+    non_zero_columns = player_data.any(axis=0)
+    df_non_zero = player_data.loc[:, non_zero_columns]
+
     # Dropdown to select y-axis column
-    y_column = st.selectbox("Select a column to graph (y-axis):", options=player_data.columns.difference(["week"]))
+    y_column = st.selectbox("Select a column to graph (y-axis):", options=df_non_zero.columns.difference(["week"]))
 
     # Plotting with Streamlit native bar chart
     st.bar_chart(data=player_data.set_index("week")[[y_column]])
