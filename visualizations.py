@@ -145,30 +145,63 @@ def get_position_kpis(position:str):
         }
 
     return scoring_stats, opportunity_stats, advanced_stats
+###############
+def make_cards_from_stats(stat_category: str, stat_dict, player_ranks, stat_averages, stat_totals):
+    # Render the category header
+    st.markdown(f"<h2 style='text-align: center;'>{stat_category}</h2>", unsafe_allow_html=True)
+    # Return early if there are no stats to display
+    if not stat_dict:
+        return
 
+    # Convert the dictionary keys to a list for predictable ordering
+    keys = list(stat_dict.keys())
 
+    # Decide the number of cards per row:
+    # - If there are more than 3 stats, use 3 per row.
+    # - Otherwise, use all available stats in one row.
+    chunk_size = 3 if len(keys) > 3 else len(keys)
 
-def make_cards_from_stats(stat_category:str,
-                          stat_dict,
-                          player_ranks,
-                          stat_averages,
-                          stat_totals,
-                          ):
-    st.markdown(f"<h2 style='text-align: center;'>{stat_category} </h2>", unsafe_allow_html=True)
-    # if len(stat_dict) <= 3:
-    if len(stat_dict):
-        columns = st.columns(len(stat_dict))
-        for col, stat in zip(columns, stat_dict):
-            if stat_dict[stat].startswith('Average'):
-                stat_value = round(stat_averages[stat])
-            else:
-                stat_value= round(stat_totals[stat], 2)
+    # Process the keys in chunks so that each chunk represents one row of cards
+    for i in range(0, len(keys), chunk_size):
+        chunk_keys = keys[i:i + chunk_size]
+        # Create columns based on the number of stats in this chunk
+        cols = st.columns(len(chunk_keys))
+
+        # Render each card in its corresponding column
+        for col, key in zip(cols, chunk_keys):
+            label = stat_dict[key]
+            # Choose the value based on whether the label starts with "Average"
+            stat_value = round(stat_averages[key]) if label.startswith('Average') else round(stat_totals[key], 2)
             with col:
                 kpi_card(
-                    stat_dict[stat],
+                    label,
                     value=stat_value,
-                    rank=player_ranks[stat].iloc[0], # This now doesn't work
+                    rank=player_ranks[key].iloc[0]  # Adjust as needed if the data structure changes
                 )
+
+                ################
+
+# def make_cards_from_stats(stat_category:str,
+#                           stat_dict,
+#                           player_ranks,
+#                           stat_averages,
+#                           stat_totals,
+#                           ):
+#     st.markdown(f"<h2 style='text-align: center;'>{stat_category} </h2>", unsafe_allow_html=True)
+#     # if len(stat_dict) <= 3:
+#     if len(stat_dict):
+#         columns = st.columns(len(stat_dict))
+#         for col, stat in zip(columns, stat_dict):
+#             if stat_dict[stat].startswith('Average'):
+#                 stat_value = round(stat_averages[stat])
+#             else:
+#                 stat_value= round(stat_totals[stat], 2)
+#             with col:
+#                 kpi_card(
+#                     stat_dict[stat],
+#                     value=stat_value,
+#                     rank=player_ranks[stat].iloc[0], # This now doesn't work
+#                 )
 
 
 def ScoringKPIs(stat_totals:pd.DataFrame,
