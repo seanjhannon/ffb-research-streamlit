@@ -1,5 +1,7 @@
 import pandas as pd
 import streamlit as st
+from streamlit import session_state as STATE
+
 import data_loader
 import numpy as np
 import plotly.graph_objects as go
@@ -20,6 +22,10 @@ def Header():
     def headshot(headshot_url: str):
         st.image(headshot_url)
 
+
+    def update_state(at, val):
+        st.session_state.at = val
+
     def name(
             player_fname,
             player_lname,
@@ -33,21 +39,43 @@ def Header():
     headshot_col, name_col, selectors_col = st.columns(3)
 
     with selectors_col:
-        selected_year = int(year_selector())
-        year_data = data_loader.load_data_one_year(selected_year)
-        display_names = year_data['player_display_name'].unique().tolist()
-        selected_player_name = name_selector(display_names)
+        # selected_year = int(year_selector()) # change to allow range
+
+        selected_year = st.number_input('Choose a year',
+                        min_value=1999,
+                        step=1,
+                        # value=2024,
+                      key="selected_year")
 
 
-    selected_player_data = year_data.query(f"player_display_name == @selected_player_name")
+        # Check if the year has changed and reload data
+        if "last_selected_year" not in st.session_state or st.session_state.last_selected_year != selected_year:
+            st.session_state.last_selected_year = selected_year
+            st.session_state["tables"]["full_data"] = data_loader.load_data(selected_year)  # Reload data
+            data_loader.update_tables()
+
+            # st.session_state["tables"]["full_data"] = data_loader.load_data(st.session_state.selected_year)
+        display_names = st.session_state["tables"]["full_data"]['player_display_name'].unique().tolist()
+
+        # selected_player_name = name_selector(display_names)
+
+        st.selectbox('Choose a player',
+                      options = display_names,
+                      key="selected_player")
+
+
+    # st.session_state["tables"]["player_data"] = st.session_state["tables"]["full_data"].query(f"player_display_name == @selected_player_name")
+
     # This part is all data source-specific, would need to change to accommodate a different API
-    selected_player_headshot = selected_player_data['headshot_url'].iloc[0]
-    selected_player_firstname = selected_player_name.split(' ')[0]
-    selected_player_lastname = ' '.join(selected_player_name.split(' ')[1:]) # Handles juniors
-    selected_player_position = selected_player_data['position'].iloc[0]
-    selected_player_team = selected_player_data['recent_team'].iloc[-1] #gets most recent value in case of a trade
 
-    positional_data = year_data.query(f"position == @selected_player_position")
+    selected_player_firstname = st.session_state.selected_player.split(' ')[0]
+    selected_player_lastname = ' '.join(st.session_state.selected_player.split(' ')[1:]) # Handles juniors
+
+
+    selected_player_headshot = st.session_state["tables"]["player_data"]['headshot_url'].iloc[0]
+    selected_player_position = st.session_state["tables"]["player_data"]['position'].iloc[0]
+    selected_player_team = st.session_state["tables"]["player_data"]['recent_team'].iloc[-1] #gets most recent value in case of a trade
+
 
     with headshot_col:
         headshot(selected_player_headshot)
@@ -59,34 +87,40 @@ def Header():
              selected_player_team
              )
 
-    return positional_data, selected_player_data
+    return
 
 
-def WeekSelector(selected_player_data: pd.DataFrame):
-    all_weeks = selected_player_data['week'].unique().tolist()
+def WeekSelector():
+    all_weeks = st.session_state["tables"]["full_data"]['week'].unique().tolist()
     if len(all_weeks) == 1:
         # Handle single week case
-        return selected_player_data
+        return
     else:
         # Handle normal case with a range of weeks
-        start_week, end_week = st.slider(  # will eventually need to handle multiple years
+        new_selected_weeks = st.slider(  # will eventually need to handle multiple years
             "Select a range of weeks",
             min_value=min(all_weeks),
             max_value=max(all_weeks),
-            value=(min(all_weeks), max(all_weeks)),  # Default to full range
-            step=1
+            # value=(min(all_weeks), max(all_weeks)),  # Default to full range
+            step=1,
+            key="selected_weeks"
         )
-    selected_weeks = [num for num in all_weeks if start_week <= num <= end_week]
-    # filter data by above conditions for use in graphs
-    selected_player_and_range = selected_player_data.query("week in @selected_weeks")
 
-    return (start_week, end_week), selected_player_and_range
+    # filter data by above conditions for use in graphs
+    if new_selected_weeks != st.session_state.selected_weeks:
+        # selected_weeks = [num for num in all_weeks if new_selected_weeks[0] <= num <= new_selected_weeks[1]]
+        # st.session_state.selected_weeks = (selected_weeks[0], selected_weeks[1])
+        st.session_state.selected_weeks = new_selected_weeks
+        data_loader.update_tables()
+
+
+    return
 
 
 
 def get_position_kpis(position:str):
 
-    if position == 'WR' or 'TE':
+    if position in [ 'WR', 'TE']:
         scoring_stats = {
             'calc_fantasy_points': 'Fantasy Points',
             'receiving_yards': 'Receiving Yards',
@@ -105,7 +139,7 @@ def get_position_kpis(position:str):
             'racr': 'RACR'
         }
 
-    if position == 'RB':
+    elif position == 'RB':
 
         scoring_stats = {
             'calc_fantasy_points': 'Fantasy Points',
@@ -146,7 +180,8 @@ def get_position_kpis(position:str):
 
     return scoring_stats, opportunity_stats, advanced_stats
 ###############
-def make_cards_from_stats(stat_category: str, stat_dict, player_ranks, stat_averages, stat_totals):
+
+def make_cards_from_stats(stat_category: str, stat_dict):
     # Render the category header
     st.markdown(f"<h2 style='text-align: center;'>{stat_category}</h2>", unsafe_allow_html=True)
     # Return early if there are no stats to display
@@ -155,6 +190,14 @@ def make_cards_from_stats(stat_category: str, stat_dict, player_ranks, stat_aver
 
     # Convert the dictionary keys to a list for predictable ordering
     keys = list(stat_dict.keys())
+
+    selected_player = st.session_state.selected_player
+
+    tables = st.session_state["tables"]
+    player_totals = tables["player_stat_totals"]
+    player_totals_ranks = tables["position_ranks_totals"].query("player_display_name == @selected_player")
+    player_averages = tables["player_stat_averages"]
+    player_averages_ranks = tables["position_ranks_averages"].query("player_display_name == @selected_player")
 
     # Decide the number of cards per row:
     # - If there are more than 3 stats, use 3 per row.
@@ -171,93 +214,41 @@ def make_cards_from_stats(stat_category: str, stat_dict, player_ranks, stat_aver
         for col, key in zip(cols, chunk_keys):
             label = stat_dict[key]
             # Choose the value based on whether the label starts with "Average"
-            stat_value = round(stat_averages[key]) if label.startswith('Average') else round(stat_totals[key], 2)
+            if label.startswith("Average"):
+                stat_value = round(player_averages[key], 2)
+                rank = player_averages_ranks[key]
+            else:
+                stat_value = round(player_totals[key], 2)
+                rank = player_totals_ranks[key]
+
             with col:
                 kpi_card(
                     label,
                     value=stat_value,
-                    rank=player_ranks[key].iloc[0]  # Adjust as needed if the data structure changes
+                    rank=rank.iloc[0]  # Adjust as needed if the data structure changes
                 )
 
-                ################
 
-# def make_cards_from_stats(stat_category:str,
-#                           stat_dict,
-#                           player_ranks,
-#                           stat_averages,
-#                           stat_totals,
-#                           ):
-#     st.markdown(f"<h2 style='text-align: center;'>{stat_category} </h2>", unsafe_allow_html=True)
-#     # if len(stat_dict) <= 3:
-#     if len(stat_dict):
-#         columns = st.columns(len(stat_dict))
-#         for col, stat in zip(columns, stat_dict):
-#             if stat_dict[stat].startswith('Average'):
-#                 stat_value = round(stat_averages[stat])
-#             else:
-#                 stat_value= round(stat_totals[stat], 2)
-#             with col:
-#                 kpi_card(
-#                     stat_dict[stat],
-#                     value=stat_value,
-#                     rank=player_ranks[stat].iloc[0], # This now doesn't work
-#                 )
+def ScoringKPIs():
 
+    selected_player_position = st.session_state["tables"]["player_data"]['position'].iloc[0]
 
-def ScoringKPIs(stat_totals:pd.DataFrame,
-                stat_averages,
-                position_ranks:pd.DataFrame,
-
-                weekly_player_stats: st
-                ):
-    # Rec, rec yds, rec tds
-    player_name = weekly_player_stats['player_display_name'].values[0]
-    player_ranks = position_ranks.query('player_display_name == @player_name')
-    position = weekly_player_stats['position'].values[0]
-
-    scoring_stats, opportunity_stats, advanced_stats = get_position_kpis(position)
-
-    st.write(advanced_stats)
+    scoring_stats, opportunity_stats, advanced_stats = get_position_kpis(selected_player_position)
 
     scoring_kpis_cols = st.columns(3) # needs adjustment
 
     with scoring_kpis_cols[0]:
         make_cards_from_stats(stat_category='Production',
-                              stat_dict=scoring_stats,
-                              player_ranks=player_ranks,
-                              stat_averages=stat_averages,
-                              stat_totals=stat_totals)
+                              stat_dict=scoring_stats)
 
 
     with scoring_kpis_cols[1]:
-        st.markdown("<h2 style='text-align: center;'>Opportunity </h2>", unsafe_allow_html=True)
-        columns = st.columns(len(opportunity_stats))
-        for col, stat in zip(columns, opportunity_stats):
-            if opportunity_stats[stat].startswith('Average'):
-                stat_value = round(stat_averages[stat])
-            else:
-                stat_value= round(stat_totals[stat], 2)
-            with col:
-                kpi_card(
-                    opportunity_stats[stat],
-                    value=stat_value,
-                    rank=player_ranks[stat].iloc[0], # This now doesn't work
-                )
+        make_cards_from_stats(stat_category='Opportunity',
+                              stat_dict=opportunity_stats)
 
     with scoring_kpis_cols[2]:
-        st.markdown("<h2 style='text-align: center;'>Advanced </h2>", unsafe_allow_html=True)
-        columns = st.columns(len(advanced_stats))
-        for col, stat in zip(columns, advanced_stats):
-            if advanced_stats[stat].startswith('Average'):
-                stat_value = round(stat_averages[stat])
-            else:
-                stat_value= round(stat_totals[stat], 2)
-            with col:
-                kpi_card(
-                    advanced_stats[stat],
-                    value=stat_value,
-                    rank=player_ranks[stat].iloc[0], # This now doesn't work
-                )
+        make_cards_from_stats(stat_category='Advanced',
+                              stat_dict=advanced_stats)
 
 
 

@@ -136,6 +136,16 @@ def calculate_total_stats(stats_df: pd.DataFrame) -> pd.DataFrame:
 
     return grouped
 
+def calculate_avg_stats(stats_df: pd.DataFrame) -> pd.DataFrame:
+
+    # Select numeric columns
+    numeric_df = stats_df.select_dtypes(include='number')
+    numeric_df['player_display_name'] = stats_df['player_display_name']
+
+    grouped = numeric_df.groupby('player_display_name',as_index=False).mean()
+
+    return grouped
+
 
 def calculate_fantasy_points(
         stats_row: pd.Series,
