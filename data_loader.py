@@ -2,6 +2,7 @@ import streamlit as st
 import nfl_data_py as nfl
 from streamlit import session_state
 
+import data_loader
 import scoring
 
 STAT_MAPPING = scoring.stat_mapping_nfl_py
@@ -20,15 +21,22 @@ def load_data(years):
 
     return nfl.import_weekly_data(year_range, downcast=True)
 
+def update_state(var_name):
+    if st.session_state[var_name] != st.session_state[f"{var_name}_input"]:
+        st.session_state[var_name] = st.session_state[f"{var_name}_input"]
+    if var_name == "selected_year":
+        data_loader.update_tables()
+
+
+
 def update_tables():
     tables = st.session_state["tables"]  # Retrieve existing tables
 
     selected_weeks = st.session_state.selected_weeks
-    # selected_weeks_range = [num for num in selected_weeks if selected_weeks[0] <= num <= selected_weeks[1]]
     selected_weeks_range = range(selected_weeks[0], selected_weeks[1]+1)
 
     # Calculate Fantasy Points
-    full_data = tables["full_data"] # don't filter this by weeks to prevent unnecessary reloads
+    full_data = load_data(st.session_state.selected_year)
     full_data["calc_fantasy_points"] = full_data.apply(
         lambda row: scoring.calculate_fantasy_points(row, SCORING_FORMAT, STAT_MAPPING),
         axis=1
@@ -43,6 +51,7 @@ def update_tables():
     player_data = player_data.query("week in @selected_weeks_range")
     # Update player-related tables
     tables["player_data"] = player_data
+
     tables["player_stat_totals"] = player_data.sum()
     tables["player_stat_averages"] = player_data.mean()
     tables["player_points_by_stat"] = scoring.calculate_fantasy_points_by_category(
@@ -58,17 +67,18 @@ def update_tables():
         st.warning(f"No positional data found for position: {st.session_state.selected_player_position}")
         return
 
+    positional_data = positional_data.query("week in @selected_weeks_range")
     # Update positional-related tables
     tables["positional_data"] = positional_data
-    positional_totals = scoring.calculate_total_stats(positional_data)
-    positional_averages = scoring.calculate_avg_stats(positional_data)
 
+    positional_totals = scoring.calculate_total_stats(positional_data)
     tables["position_ranks_totals"] = scoring.make_position_ranks(positional_totals)
+
+    positional_averages = scoring.calculate_avg_stats(positional_data)
     tables["position_ranks_averages"] = scoring.make_position_ranks(positional_averages)
 
     # Store back to session state
     st.session_state["tables"] = tables
-
     st.write("data reloaded")
 
 

@@ -1,72 +1,36 @@
 import pandas as pd
 import streamlit as st
-from streamlit import session_state as STATE
-
 import data_loader
 import numpy as np
 import plotly.graph_objects as go
 
 
 def Header():
-    """ Displays header content and passes player down into subsequent components"""
-    def year_selector():
-        return st.text_input('Choose a year', '2024')
-
-    def name_selector(name_options):
-        return st.selectbox(
-            'Search for a player:',
-            options=name_options,
-            placeholder='Start typing to search...'
-        )
-
-    def headshot(headshot_url: str):
-        st.image(headshot_url)
 
 
-    def update_state(at, val):
-        st.session_state.at = val
-
-    def name(
-            player_fname,
-            player_lname,
-            player_pos,
-            player_team
-    ):
-        st.subheader(player_fname)
-        st.subheader(player_lname)
-        st.write(f"{player_pos}, {player_team} ")
 
     headshot_col, name_col, selectors_col = st.columns(3)
 
     with selectors_col:
-        # selected_year = int(year_selector()) # change to allow range
 
         selected_year = st.number_input('Choose a year',
                         min_value=1999,
+                        value=st.session_state.selected_year,
                         step=1,
-                        # value=2024,
-                      key="selected_year")
+                        key="selected_year_input",
+                        on_change=data_loader.update_state,
+                        args=("selected_year",)
+                                        )
 
-
-        # Check if the year has changed and reload data
-        if "last_selected_year" not in st.session_state or st.session_state.last_selected_year != selected_year:
-            st.session_state.last_selected_year = selected_year
-            st.session_state["tables"]["full_data"] = data_loader.load_data(selected_year)  # Reload data
-            data_loader.update_tables()
-
-            # st.session_state["tables"]["full_data"] = data_loader.load_data(st.session_state.selected_year)
         display_names = st.session_state["tables"]["full_data"]['player_display_name'].unique().tolist()
-
-        # selected_player_name = name_selector(display_names)
 
         st.selectbox('Choose a player',
                       options = display_names,
-                      key="selected_player")
+                      key="selected_player_input",
+                      on_change=data_loader.update_state,
+                      args=("selected_player",)
+                     )
 
-
-    # st.session_state["tables"]["player_data"] = st.session_state["tables"]["full_data"].query(f"player_display_name == @selected_player_name")
-
-    # This part is all data source-specific, would need to change to accommodate a different API
 
     selected_player_firstname = st.session_state.selected_player.split(' ')[0]
     selected_player_lastname = ' '.join(st.session_state.selected_player.split(' ')[1:]) # Handles juniors
@@ -78,14 +42,13 @@ def Header():
 
 
     with headshot_col:
-        headshot(selected_player_headshot)
+        st.image(selected_player_headshot)
 
     with name_col:
-        name(selected_player_firstname,
-             selected_player_lastname,
-             selected_player_position,
-             selected_player_team
-             )
+        st.subheader(selected_player_firstname)
+        st.header(selected_player_lastname)
+        st.write(f"{selected_player_team}, {selected_player_position} ")
+
 
     return
 
@@ -101,17 +64,12 @@ def WeekSelector():
             "Select a range of weeks",
             min_value=min(all_weeks),
             max_value=max(all_weeks),
-            # value=(min(all_weeks), max(all_weeks)),  # Default to full range
+            value= st.session_state.selected_weeks,  # Default to full range
             step=1,
-            key="selected_weeks"
+            key="selected_weeks_input",
+            on_change=data_loader.update_state,
+            args=("selected_weeks",)
         )
-
-    # filter data by above conditions for use in graphs
-    if new_selected_weeks != st.session_state.selected_weeks:
-        # selected_weeks = [num for num in all_weeks if new_selected_weeks[0] <= num <= new_selected_weeks[1]]
-        # st.session_state.selected_weeks = (selected_weeks[0], selected_weeks[1])
-        st.session_state.selected_weeks = new_selected_weeks
-        data_loader.update_tables()
 
 
     return

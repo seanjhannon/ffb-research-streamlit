@@ -13,11 +13,12 @@ SCORING_FORMAT = scoring.PPRScoringFormat()
 
 st.set_page_config(layout="wide")
 
+
 if "selected_year" not in session_state:
     st.session_state.selected_year = 2024
 
 if "selected_player" not in session_state:
-    st.session_state.selected_player = "Justin Jefferson"
+    st.session_state.selected_player = "Aaron Rodgers"
 
 if "selected_weeks" not in session_state:
     st.session_state.selected_weeks = (0, 16)
@@ -42,9 +43,6 @@ if "tables" not in st.session_state:
 
 else:
     data_loader.update_tables()
-
-st.write(st.session_state["tables"]["player_data"])
-
 
 # Display the header - contains headshot, name, and week/player selectors
 header_container = st.container(border=True)
