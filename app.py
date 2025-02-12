@@ -43,6 +43,8 @@ if "tables" not in st.session_state:
 else:
     data_loader.update_tables()
 
+st.write(st.session_state["tables"]["player_data"])
+
 
 # Display the header - contains headshot, name, and week/player selectors
 header_container = st.container(border=True)
@@ -68,6 +70,14 @@ with charts_container:
         radar_container = st.container()
         with radar_container:
             viz.Radar(st.session_state["tables"]["player_points_by_stat"])
+            st.markdown("""
+                <style>
+                    [data-testid="column"]:nth-child(2){
+                        background-color: lightgrey;
+                    }
+                </style>
+                """, unsafe_allow_html=True
+                        )
 
     with col2:
         viz.CustomBar(st.session_state["tables"]["player_data"])

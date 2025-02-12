@@ -289,8 +289,6 @@ def Radar(points_by_stat:pd.DataFrame):
     categories = nonzero_points_series.index.tolist()  # List of categories
     values = nonzero_points_series.values.tolist()  # List of corresponding values
 
-    # Create a radar chart with P
-    # Create a radar chart with Plotly
     fig = go.Figure()
 
     fig.add_trace(go.Scatterpolar(
