@@ -1,5 +1,10 @@
 # On year select, load in that year's data - must cache
+import pandas as pd
 import streamlit as st
+from streamlit import session_state
+from typing import Dict
+
+import data_loader
 import visualizations as viz
 import scoring
 
@@ -8,48 +13,53 @@ SCORING_FORMAT = scoring.PPRScoringFormat()
 
 st.set_page_config(layout="wide")
 
+
+if "selected_year" not in session_state:
+    st.session_state.selected_year = 2024
+
+if "selected_player" not in session_state:
+    st.session_state.selected_player = "Aaron Rodgers"
+
+if "selected_weeks" not in session_state:
+    st.session_state.selected_weeks = (0, 16)
+
+if "tables" not in st.session_state:
+    # Load the full data first
+    full_data = data_loader.load_data(st.session_state.selected_year)
+
+    # Create the dictionary without self-referencing st.session_state["tables"]
+    tables = {
+        "full_data": full_data,
+        "positional_data": None,
+        "position_ranks_totals": None,
+        "position_ranks_averages": None,
+        "player_data": None,
+        "player_stat_totals": None,
+        "player_stat_averages": None,
+        "player_points_by_stat": None
+    }
+    st.session_state["tables"] = tables
+    data_loader.update_tables()
+
+else:
+    data_loader.update_tables()
+
+
 # Display the header - contains headshot, name, and week/player selectors
 header_container = st.container(border=True)
 with header_container:
-    positional_data, selected_player_data = viz.Header()
+   viz.Header()
 
 
 # Display the week selector
 week_selector_container = st.container(border=True)
 with week_selector_container:
-    week_boundaries, selected_player_and_range = viz.WeekSelector(selected_player_data)
+    viz.WeekSelector()
 
-
-
-# Once we have the weekly data, we compute fantasy points per week, total stats, total points by stat, and position ranks
-
-# Week-by-week stats, with scoring determined by selected format
-selected_player_and_range["calc_fantasy_points"] = selected_player_and_range.apply(
-    lambda row: scoring.calculate_fantasy_points(row, SCORING_FORMAT, STAT_MAPPING),
-    axis=1
-)
-
-positional_data["calc_fantasy_points"] = positional_data.apply(
-    lambda row: scoring.calculate_fantasy_points(row, SCORING_FORMAT, STAT_MAPPING),
-    axis=1
-)
-
-week_range = range(week_boundaries[0], week_boundaries[1]+1)
-
-#total stats
-stat_totals = scoring.calculate_total_stats(selected_player_and_range)
-#points by stat
-points_by_stat = scoring.calculate_fantasy_points_by_category(selected_player_and_range, SCORING_FORMAT, STAT_MAPPING)
-
-#position ranks
-positional_totals = scoring.calculate_total_stats(positional_data.query('week in @week_range'))
-position_ranks = scoring.make_position_ranks(positional_totals)
 
 scoring_kpis_container = st.container()
 with scoring_kpis_container:
-    viz.ScoringKPIs(stat_totals,
-                    position_ranks,
-                    selected_player_data['position'].values[0])
+    viz.ScoringKPIs()
 
 charts_container = st.container()
 with charts_container:
@@ -58,9 +68,17 @@ with charts_container:
     with col1:
         radar_container = st.container()
         with radar_container:
-            viz.Radar(points_by_stat)
+            viz.Radar(st.session_state["tables"]["player_points_by_stat"])
+            st.markdown("""
+                <style>
+                    [data-testid="column"]:nth-child(2){
+                        background-color: lightgrey;
+                    }
+                </style>
+                """, unsafe_allow_html=True
+                        )
 
     with col2:
-        viz.CustomBar(selected_player_and_range)
+        viz.CustomBar(st.session_state["tables"]["player_data"])
 
 
