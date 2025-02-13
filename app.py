@@ -44,6 +44,11 @@ if "tables" not in st.session_state:
 else:
     data_loader.update_tables()
 
+st.write(st.session_state.selected_year)
+st.write(st.session_state["tables"]["full_data"])
+st.write(st.session_state["tables"]["player_data"])
+st.write(st.session_state["tables"]["player_points_by_stat"])
+
 # Display the header - contains headshot, name, and week/player selectors
 header_container = st.container(border=True)
 with header_container:

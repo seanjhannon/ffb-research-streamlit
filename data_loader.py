@@ -1,8 +1,5 @@
 import streamlit as st
 import nfl_data_py as nfl
-from streamlit import session_state
-
-import data_loader
 import scoring
 
 STAT_MAPPING = scoring.stat_mapping_nfl_py
@@ -25,7 +22,7 @@ def update_state(var_name):
     if st.session_state[var_name] != st.session_state[f"{var_name}_input"]:
         st.session_state[var_name] = st.session_state[f"{var_name}_input"]
     if var_name == "selected_year":
-        data_loader.update_tables()
+        update_tables()
 
 
 
@@ -41,6 +38,7 @@ def update_tables():
         lambda row: scoring.calculate_fantasy_points(row, SCORING_FORMAT, STAT_MAPPING),
         axis=1
     )
+    tables['full_data'] = full_data
 
     # Ensure player data is found before extracting the position
     player_data = full_data.query("player_display_name == @st.session_state.selected_player")
@@ -79,49 +77,6 @@ def update_tables():
 
     # Store back to session state
     st.session_state["tables"] = tables
-    st.write("data reloaded")
 
 
-# def update_tables():
-#     # st.write(st.session_state["tables"]["full_data"])
-#     full_data = st.session_state["tables"]["full_data"]
-#
-#     # Set player data and its tables then positional data and its tables
-#     st.session_state["tables"] = {
-#         "player_data": full_data.query("player_display_name == @st.session_state.selected_player"),
-#         "player_stat_totals": None,
-#         "player_stat_averages": None,
-#         "player_points_by_stat": None
-#     }
-#
-#     st.session_state.selected_player_position = st.session_state["tables"]["player_data"]["position"].iloc[0]
-#
-#
-#     st.session_state["tables"] = {
-#         "positional_data": full_data.query("position == @st.session_state.selected_player_position"),
-#         "position_ranks_totals": None,
-#         "position_ranks_averages": None,
-#     }
 
-# @st.cache_data(show_spinner="Loading data ...")
-# def load_data_one_year(year):
-#     """Loads a single year of data in a cached manner"""
-#     return nfl.import_weekly_data([year],downcast=True)
-#
-#
-#
-# class DataLoader:
-#
-#     def __init__(self, years):
-#         if years is None:
-#             print('No year(s) selected!?')
-#             return
-#         elif isinstance(years, list):
-#             year_range = years
-#         else:
-#             year_range = [years]
-#
-#         self.full_data = self.load_data(year_range)
-#
-#
-#

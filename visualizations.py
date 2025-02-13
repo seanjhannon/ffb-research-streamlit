@@ -224,7 +224,7 @@ def kpi_card(name: str, value, rank: int):
     if type(value) == np.float32:
         value = round(float(value), 2)
 
-    rank_color = "green" if rank <= 10 else "white"
+    rank_color = "green" if (rank <= 10 and value > 0) else "white"
 
     st.markdown(
         f"""
@@ -243,9 +243,14 @@ def kpi_card(name: str, value, rank: int):
 def Radar(points_by_stat:pd.DataFrame):
     nonzero_points_series = points_by_stat[points_by_stat != 0]
 
+    if nonzero_points_series.sum() == 0:
+        st.write("This dude didn't score any points in this time period!")
+        return
+
     # Extract categories and values programmatically
     categories = nonzero_points_series.index.tolist()  # List of categories
-    values = nonzero_points_series.values.tolist()  # List of corresponding values
+    values = nonzero_points_series.values.tolist()
+    # List of corresponding values
 
     fig = go.Figure()
 
