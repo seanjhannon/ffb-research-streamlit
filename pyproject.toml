@@ -1,9 +1,13 @@
-[tool.poetry]
+[project]
+name = "ffbresearch"
 package-mode = false
-name = "ffb-research-streamlit"
+
 version = "0.1.0"
-description = ""
-authors = ["Sean Hannon <seanhannon00@gmail.com>"]
+description = "Make your own decisions!"
+authors = [
+    {name = "Sean Hannon",email = "seanhannon00@gmail.com"}
+]
+
 readme = "README.md"
 packages = [
     { include = "ffb_research_streamlit" }
