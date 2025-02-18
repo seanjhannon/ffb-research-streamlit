@@ -7,12 +7,19 @@ from typing import Dict
 import data_loader
 import visualizations as viz
 import scoring
+from scoring import StandardScoringFormat, PPRScoringFormat
 
 STAT_MAPPING = scoring.stat_mapping_nfl_py
-SCORING_FORMAT = scoring.PPRScoringFormat()
+
 
 st.set_page_config(layout="wide")
 
+
+if "scoring_formats" not in session_state:
+    st.session_state.scoring_formats = [StandardScoringFormat(), PPRScoringFormat()]
+
+if "selected_scoring_format" not in session_state:
+    st.session_state.selected_scoring_format = st.session_state.scoring_formats[0] #Default to Standard
 
 if "selected_year" not in session_state:
     st.session_state.selected_year = 2024
@@ -43,6 +50,18 @@ if "tables" not in st.session_state:
 
 else:
     data_loader.update_tables()
+
+scoring_format_container = st.container(border=True)
+with scoring_format_container:
+
+    st.selectbox('Select scoring format',
+                 options=st.session_state.scoring_formats,
+
+                 format_func=lambda x:x.name,
+                 key="selected_scoring_format_input",
+                 on_change=data_loader.update_state,
+                 args=("selected_scoring_format",)
+                 )
 
 
 # Display the header - contains headshot, name, and week/player selectors

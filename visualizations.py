@@ -13,14 +13,14 @@ def Header():
 
     with selectors_col:
 
-        selected_year = st.number_input('Choose a year',
-                        min_value=1999,
-                        value=st.session_state.selected_year,
-                        step=1,
-                        key="selected_year_input",
-                        on_change=data_loader.update_state,
-                        args=("selected_year",)
-                                        )
+        st.number_input('Choose a year',
+                    min_value=1999,
+                    value=st.session_state.selected_year,
+                    step=1,
+                    key="selected_year_input",
+                    on_change=data_loader.update_state,
+                    args=("selected_year",)
+                    )
 
         display_names = st.session_state["tables"]["full_data"]['player_display_name'].unique().tolist()
 
@@ -34,7 +34,6 @@ def Header():
 
     selected_player_firstname = st.session_state.selected_player.split(' ')[0]
     selected_player_lastname = ' '.join(st.session_state.selected_player.split(' ')[1:]) # Handles juniors
-
 
     selected_player_headshot = st.session_state["tables"]["player_data"]['headshot_url'].iloc[0]
     selected_player_position = st.session_state["tables"]["player_data"]['position'].iloc[0]
@@ -127,7 +126,7 @@ def get_position_kpis(position:str):
 
         opportunity_stats = {
             'attempts': 'Attempts',
-            'passing_air_yards': 'Targets',
+            'passing_air_yards': 'Air Yards',
             'carries': 'Carries'
         }
 
