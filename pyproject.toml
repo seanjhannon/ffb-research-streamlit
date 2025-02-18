@@ -1,7 +1,7 @@
 [project]
-name = "ffb-research-streamlit"
+name = "ffb-research"
 version = "0.1.0"
-description = ""
+description = "Make your own decisions!"
 authors = [
     {name = "Sean Hannon",email = "seanhannon00@gmail.com"}
 ]
