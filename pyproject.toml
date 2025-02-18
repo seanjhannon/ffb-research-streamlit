@@ -1,5 +1,5 @@
 [project]
-name = "ffb-research"
+name = "ffbresearch"
 version = "0.1.0"
 description = "Make your own decisions!"
 authors = [
