@@ -14,21 +14,21 @@ def Header():
     with selectors_col:
 
         st.number_input('Choose a year',
-                    min_value=1999,
-                    value=st.session_state.selected_year,
-                    step=1,
-                    key="selected_year_input",
-                    on_change=data_loader.update_state,
-                    args=("selected_year",)
-                    )
+                        min_value=1999,
+                        value=st.session_state.selected_year,
+                        step=1,
+                        key="selected_year_input",
+                        on_change=data_loader.update_state,
+                        args=("selected_year",)
+                        )
 
         display_names = st.session_state["tables"]["full_data"]['player_display_name'].unique().tolist()
 
         st.selectbox('Choose a player',
-                      options = display_names,
-                      key="selected_player_input",
-                      on_change=data_loader.update_state,
-                      args=("selected_player",)
+                     options = display_names,
+                     key="selected_player_input",
+                     on_change=data_loader.update_state,
+                     args=("selected_player",)
                      )
 
 

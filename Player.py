@@ -1,8 +1,6 @@
 # On year select, load in that year's data - must cache
-import pandas as pd
 import streamlit as st
 from streamlit import session_state
-from typing import Dict
 
 import data_loader
 import visualizations as viz
