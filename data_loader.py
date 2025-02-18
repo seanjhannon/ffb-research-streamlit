@@ -3,7 +3,7 @@ import nfl_data_py as nfl
 import scoring
 
 STAT_MAPPING = scoring.stat_mapping_nfl_py
-SCORING_FORMAT = scoring.PPRScoringFormat()
+
 
 
 @st.cache_data(show_spinner="Loading data ...")
@@ -21,7 +21,7 @@ def load_data(years):
 def update_state(var_name):
     if st.session_state[var_name] != st.session_state[f"{var_name}_input"]:
         st.session_state[var_name] = st.session_state[f"{var_name}_input"]
-    if var_name == "selected_year":
+    if var_name in ["selected_year", "selected_scoring_format"]:
         update_tables()
 
 
@@ -35,7 +35,7 @@ def update_tables():
     # Calculate Fantasy Points
     full_data = load_data(st.session_state.selected_year)
     full_data["calc_fantasy_points"] = full_data.apply(
-        lambda row: scoring.calculate_fantasy_points(row, SCORING_FORMAT, STAT_MAPPING),
+        lambda row: scoring.calculate_fantasy_points(row, st.session_state.selected_scoring_format, STAT_MAPPING),
         axis=1
     )
     tables['full_data'] = full_data
@@ -53,7 +53,7 @@ def update_tables():
     tables["player_stat_totals"] = player_data.sum()
     tables["player_stat_averages"] = player_data.mean()
     tables["player_points_by_stat"] = scoring.calculate_fantasy_points_by_category(
-        player_data, scoring_format=SCORING_FORMAT, stat_mapping=STAT_MAPPING
+        player_data, scoring_format=st.session_state.selected_scoring_format, stat_mapping=STAT_MAPPING
     )
 
     st.session_state.selected_player_position = tables["player_data"]["position"].iloc[0]
