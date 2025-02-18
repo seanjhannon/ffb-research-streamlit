@@ -126,7 +126,7 @@ def get_position_kpis(position:str):
 
         opportunity_stats = {
             'attempts': 'Attempts',
-            'passing_air_yards': 'Targets',
+            'passing_air_yards': 'Air Yards',
             'carries': 'Carries'
         }
 

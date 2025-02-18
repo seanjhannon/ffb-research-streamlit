@@ -9,10 +9,13 @@ import visualizations as viz
 import scoring
 
 STAT_MAPPING = scoring.stat_mapping_nfl_py
-SCORING_FORMAT = scoring.PPRScoringFormat()
+
 
 st.set_page_config(layout="wide")
 
+
+if "scoring_format" not in session_state:
+    st.session_state.scoring_format = scoring.PPRScoringFormat()
 
 if "selected_year" not in session_state:
     st.session_state.selected_year = 2024
@@ -43,6 +46,12 @@ if "tables" not in st.session_state:
 
 else:
     data_loader.update_tables()
+
+format_container = st.container(border=True)
+with format_container:
+    st.button(f"Current Scoring Format: {st.session_state.scoring_format.name}",
+              help=st.session_state.scoring_format.__repr__()
+              )
 
 
 # Display the header - contains headshot, name, and week/player selectors
