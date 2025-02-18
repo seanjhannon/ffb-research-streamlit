@@ -1,19 +1,16 @@
-[project]
+[tool.poetry]
+package-mode = false
 name = "ffb-research-streamlit"
 version = "0.1.0"
 description = ""
-authors = [
-    {name = "Sean Hannon",email = "seanhannon00@gmail.com"}
-]
+authors = ["Sean Hannon <seanhannon00@gmail.com>"]
 readme = "README.md"
-requires-python = ">=3.12"
-dependencies = [
-    "nfl-data-py (>=0.3.3,<0.4.0)",
-    "streamlit (>=1.41.1,<2.0.0)",
-    "plotly (>=5.24.1,<6.0.0)",
+packages = [
+    { include = "ffb_research_streamlit" }
 ]
 
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.poetry.dependencies]
+python = "^3.9.8"  # Changed from 3.9.7 to 3.9.8
+nfl-data-py = ">=0.3.3,<0.4.0"
+streamlit = ">=1.41.1,<2.0.0"
+plotly = ">=5.24.1,<6.0.0"
