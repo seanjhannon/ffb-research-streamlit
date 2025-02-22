@@ -1,6 +1,6 @@
 import streamlit as st
 import nfl_data_py as nfl
-import scoring
+import utils.scoring
 
 STAT_MAPPING = scoring.stat_mapping_nfl_py
 

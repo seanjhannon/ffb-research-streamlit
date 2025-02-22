@@ -2,9 +2,9 @@
 import streamlit as st
 from streamlit import session_state
 
-import data_loader
-import visualizations as viz
-import scoring
+import utils.data_loader
+import utils.scoring
+import components.visualizations as viz
 from scoring import StandardScoringFormat, PPRScoringFormat
 
 STAT_MAPPING = scoring.stat_mapping_nfl_py
@@ -72,7 +72,6 @@ with header_container:
 week_selector_container = st.container(border=True)
 with week_selector_container:
     viz.WeekSelector()
-
 
 scoring_kpis_container = st.container()
 with scoring_kpis_container:

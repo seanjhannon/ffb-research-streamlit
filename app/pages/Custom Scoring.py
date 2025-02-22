@@ -1,5 +1,5 @@
 import streamlit as st
-from scoring import ScoringFormat
+from utils.scoring import ScoringFormat
 
 st.title("Create Custom Scoring Format")
 
