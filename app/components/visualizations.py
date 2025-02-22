@@ -5,6 +5,16 @@ import numpy as np
 import plotly.graph_objects as go
 
 
+def FormatSelector():
+    st.selectbox('Select scoring format',
+                 options=st.session_state.scoring_formats,
+
+                 format_func=lambda x:x.name,
+                 key="selected_scoring_format_input",
+                 on_change=data_loader.update_state,
+                 args=("selected_scoring_format",)
+                 )
+
 def Header():
 
 
@@ -12,6 +22,7 @@ def Header():
     headshot_col, name_col, selectors_col = st.columns(3)
 
     with selectors_col:
+        FormatSelector()
 
         st.number_input('Choose a year',
                         min_value=1999,
@@ -30,6 +41,8 @@ def Header():
                      on_change=data_loader.update_state,
                      args=("selected_player",)
                      )
+
+        WeekSelector()
 
 
     selected_player_firstname = st.session_state.selected_player.split(' ')[0]

@@ -13,30 +13,11 @@ data_loader.initialize_state()
 
 st.set_page_config(layout="wide")
 
-
-scoring_format_container = st.container(border=True)
-with scoring_format_container:
-
-    st.selectbox('Select scoring format',
-                 options=st.session_state.scoring_formats,
-
-                 format_func=lambda x:x.name,
-                 key="selected_scoring_format_input",
-                 on_change=data_loader.update_state,
-                 args=("selected_scoring_format",)
-                 )
-
-
 # Display the header - contains headshot, name, and week/player selectors
 header_container = st.container(border=True)
 with header_container:
    viz.Header()
 
-
-# Display the week selector
-week_selector_container = st.container(border=True)
-with week_selector_container:
-    viz.WeekSelector()
 
 scoring_kpis_container = st.container()
 with scoring_kpis_container:
