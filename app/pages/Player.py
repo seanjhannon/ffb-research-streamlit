@@ -2,10 +2,10 @@
 import streamlit as st
 from streamlit import session_state
 
-import utils.data_loader
-import utils.scoring
+import utils.data_loader as data_loader
+import utils.scoring as scoring
 import components.visualizations as viz
-from scoring import StandardScoringFormat, PPRScoringFormat
+from utils.scoring import StandardScoringFormat, PPRScoringFormat
 
 STAT_MAPPING = scoring.stat_mapping_nfl_py
 
