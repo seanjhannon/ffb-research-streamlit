@@ -9,6 +9,7 @@ from utils.scoring import StandardScoringFormat, PPRScoringFormat
 
 STAT_MAPPING = scoring.stat_mapping_nfl_py
 
+data_loader.initialize_state()
 
 st.set_page_config(layout="wide")
 

@@ -251,13 +251,17 @@ def Radar(points_by_stat:pd.DataFrame):
     values = nonzero_points_series.values.tolist()
     # List of corresponding values
 
+    st.subheader(f"How {st.session_state.selected_player} Scores")
     fig = go.Figure()
 
     fig.add_trace(go.Scatterpolar(
         r=values,
         theta=categories,
         fill='toself',
-        name='Fantasy Scoring'
+        name='Fantasy Scoring',
+        hovertemplate='<b>Stat</b>: %{theta} <br>'
+                      '<b>Points Scored</b>: %{r}<br>'
+                      '<extra></extra>'
     ))
 
     # Dynamically adjust the range based on the values
@@ -270,23 +274,33 @@ def Radar(points_by_stat:pd.DataFrame):
             )
         ),
         showlegend=False,
-        title="Fantasy Football Scoring Breakdown",
+        # title="Fantasy Football Scoring Breakdown",
         template='plotly_dark'  # Optional: adds a dark theme to the chart
     )
     st.write(fig)
 
+
 def CustomBar(player_data):
     # Title
-    st.title("Self-Service Bar Chart")
+    st.subheader("Self-Service Bar Chart")
 
-    non_zero_columns = player_data.any(axis=0)
-    df_non_zero = player_data.loc[:, non_zero_columns]
+    player_data_numeric = (player_data.drop(columns=[
+        "season", "week", "fantasy_points", "fantasy_points_ppr"
+    ]).rename(columns={"calc_fantasy_points": "fantasy_points"}).select_dtypes(include=np.number))
+
+    valid_cols = (player_data_numeric != 0).any() & player_data_numeric.notna().any()
+    df_non_zero = player_data_numeric.loc[:, valid_cols]
 
     # Dropdown to select y-axis column
-    y_column = st.selectbox("Select a column to graph (y-axis):", options=df_non_zero.columns.difference(["week"]))
+    y_column = st.selectbox(
+        "Select a column to graph (y-axis):",
+        options=df_non_zero.columns,
+        format_func=lambda col: col.replace("_", " ").title(),
+    )
 
-    # Plotting with Streamlit native bar chart
-    st.bar_chart(data=player_data.set_index("week")[[y_column]])
+    # Ensure we're plotting from df_non_zero
+    st.bar_chart(data=df_non_zero.set_index(player_data["week"])[[y_column]])
+
 
 
 
