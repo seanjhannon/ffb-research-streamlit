@@ -275,7 +275,9 @@ def kpi_card(name: str, value, rank: int):
 
 
 
-def Radar(points_by_stat:pd.DataFrame):
+def Radar(state):
+
+    points_by_stat = state["tables"]["player_points_by_stat"]
     nonzero_points_series = points_by_stat[points_by_stat != 0]
 
     if nonzero_points_series.sum() == 0:
@@ -287,7 +289,7 @@ def Radar(points_by_stat:pd.DataFrame):
     values = nonzero_points_series.values.tolist()
     # List of corresponding values
 
-    st.subheader(f"How {st.session_state.selected_player} Scores")
+    st.subheader(f"How {state['user_input']['selected_player']['name']} Scores")
     fig = go.Figure()
 
     fig.add_trace(go.Scatterpolar(

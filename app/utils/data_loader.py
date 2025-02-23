@@ -106,6 +106,9 @@ def refresh_child_tables_player_details():
 
 
 def build_positional_tables_from_full(state, full_data):
+    """
+    Refreshes the positional_data table to use the latest full_data and range of weeks.
+    """
 
     player_position = state["user_input"]["selected_player"]['position']
     week_range = range(state["user_input"]['selected_weeks'][0], state["user_input"]['selected_weeks'][1] + 1)
@@ -122,11 +125,13 @@ def build_positional_tables_from_full(state, full_data):
         "position_ranks_averages": scoring.make_position_ranks(scoring.calculate_avg_stats(positional_data))
     })
 
-
-
-
 def build_player_data_from_full(state, full_data):
+    """
+    Refreshes the player_data table to use the latest full_data and range of weeks.
+    """
+    week_range = range(state["user_input"]['selected_weeks'][0], state["user_input"]['selected_weeks'][1] + 1)
     player_data = full_data.query("player_display_name == @state['user_input']['selected_player']['name']")
+    player_data = player_data.query("week in @week_range")
     if player_data.empty:
         st.warning(f"No data found for player: {state['user_input']['selected_player']['name']}")
         return
