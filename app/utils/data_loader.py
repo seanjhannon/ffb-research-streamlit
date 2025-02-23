@@ -22,8 +22,8 @@ def setup_state_player_details():
                 "selected_year": 2024,
                 "selected_weeks": (0, 16),
                 "selected_player": {
-                    "name": "Justin Jefferson",
-                    "position": "WR"
+                    "name": "Aaron Rodgers",
+                    "position": "QB"
                 }
             },
             "tables": {}
