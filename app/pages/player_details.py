@@ -1,6 +1,5 @@
 # On year select, load in that year's data - must cache
 import streamlit as st
-from streamlit import session_state
 
 import utils.data_loader as data_loader
 import utils.scoring as scoring
@@ -9,17 +8,19 @@ import components.visualizations as viz
 
 STAT_MAPPING = scoring.stat_mapping_nfl_py
 
-data_loader.initialize_state()
 
-# Display the header - contains headshot, name, and week/player selectors
+if "player_details" not in st.session_state:
+    data_loader.setup_state_player_details()
+    data_loader.build_tables_player_details()
+
+# st.write(st.session_state.player_details)
 header_container = st.container(border=True)
 with header_container:
-   viz.Header()
+    viz.Header(st.session_state.player_details)
 
-
-scoring_kpis_container = st.container()
+scoring_kpis_container = st.container(border=True)
 with scoring_kpis_container:
-    viz.ScoringKPIs()
+    viz.ScoringKPIs(st.session_state.player_details)
 
 charts_container = st.container()
 with charts_container:
@@ -28,17 +29,18 @@ with charts_container:
     with col1:
         radar_container = st.container()
         with radar_container:
-            viz.Radar(st.session_state["tables"]["player_points_by_stat"])
-            st.markdown("""
-                <style>
-                    [data-testid="column"]:nth-child(2){
-                        background-color: lightgrey;
-                    }
-                </style>
-                """, unsafe_allow_html=True
-                        )
+            viz.Radar(st.session_state.player_details)
+            # st.markdown("""
+            #     <style>
+            #         [data-testid="column"]:nth-child(2){
+            #             background-color: lightgrey;
+            #         }
+            #     </style>
+            #     """, unsafe_allow_html=True
+            #             )
 
     with col2:
-        viz.CustomBar(st.session_state["tables"]["player_data"])
+        viz.CustomBar(st.session_state.player_details)
+
 
 

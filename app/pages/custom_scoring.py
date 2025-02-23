@@ -4,9 +4,6 @@ import utils.data_loader as data_loader
 
 st.title("Create Custom Scoring Format")
 
-# Initialize session state for custom scoring formats if not already set
-data_loader.initialize_state()
-
 # Function to create and store a new custom scoring format
 def create_custom_scoring():
     name = st.text_input("Enter a name for your custom scoring format:")
