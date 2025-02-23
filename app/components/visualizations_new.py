@@ -169,7 +169,11 @@ def get_position_kpis(position:str):
     return scoring_stats, opportunity_stats, advanced_stats
 ###############
 
-def make_cards_from_stats(stat_category: str, stat_dict):
+def make_cards_from_stats(state,
+                          stat_category: str,
+                          stat_dict):
+
+    selected_player_name = state["user_input"]["selected_player"]["name"]
     # Render the category header
     st.markdown(f"<h2 style='text-align: center;'>{stat_category}</h2>", unsafe_allow_html=True)
     # Return early if there are no stats to display
@@ -179,13 +183,11 @@ def make_cards_from_stats(stat_category: str, stat_dict):
     # Convert the dictionary keys to a list for predictable ordering
     keys = list(stat_dict.keys())
 
-    selected_player = st.session_state.selected_player
-
-    tables = st.session_state["tables"]
+    tables = state["tables"]
     player_totals = tables["player_stat_totals"]
-    player_totals_ranks = tables["position_ranks_totals"].query("player_display_name == @selected_player")
+    player_totals_ranks = tables["position_ranks_totals"].query("player_display_name == @selected_player_name")
     player_averages = tables["player_stat_averages"]
-    player_averages_ranks = tables["position_ranks_averages"].query("player_display_name == @selected_player")
+    player_averages_ranks = tables["position_ranks_averages"].query("player_display_name == @selected_player_name")
 
     # Decide the number of cards per row:
     # - If there are more than 3 stats, use 3 per row.
@@ -217,25 +219,28 @@ def make_cards_from_stats(stat_category: str, stat_dict):
                 )
 
 
-def ScoringKPIs():
+def ScoringKPIs(state):
 
-    selected_player_position = st.session_state["tables"]["player_data"]['position'].iloc[0]
 
+    selected_player_position = state["user_input"]["selected_player"]["position"]
     scoring_stats, opportunity_stats, advanced_stats = get_position_kpis(selected_player_position)
 
     scoring_kpis_cols = st.columns(3) # needs adjustment
 
     with scoring_kpis_cols[0]:
-        make_cards_from_stats(stat_category='Production',
+        make_cards_from_stats(state = state,
+                              stat_category='Production',
                               stat_dict=scoring_stats)
 
 
     with scoring_kpis_cols[1]:
-        make_cards_from_stats(stat_category='Opportunity',
+        make_cards_from_stats(state = state,
+                              stat_category='Opportunity',
                               stat_dict=opportunity_stats)
 
     with scoring_kpis_cols[2]:
-        make_cards_from_stats(stat_category='Advanced',
+        make_cards_from_stats(state = state,
+                              stat_category='Advanced',
                               stat_dict=advanced_stats)
 
 

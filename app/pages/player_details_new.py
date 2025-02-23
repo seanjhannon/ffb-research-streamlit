@@ -14,8 +14,13 @@ if "player_details" not in st.session_state:
     data_loader.build_tables_player_details()
 
 # st.write(st.session_state.player_details)
+header_container = st.container(border=True)
+with header_container:
+    viz.Header(st.session_state.player_details)
 
-viz.Header(st.session_state.player_details)
+scoring_kpis_container = st.container()
+with scoring_kpis_container:
+    viz.ScoringKPIs(st.session_state.player_details)
 
 
 

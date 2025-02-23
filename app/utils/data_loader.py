@@ -134,7 +134,7 @@ def build_player_data_from_full(state, full_data):
 
     state["tables"].update({
         "player_data": player_data,
-        "player_stat_totals": player_data.sum(),
+        "player_stat_totals": player_data.sum(numeric_only=True),
         "player_stat_averages": player_data.mean(numeric_only=True),
         "player_points_by_stat": scoring.calculate_fantasy_points_by_category(
             player_data, scoring_format=st.session_state.selected_scoring_format, stat_mapping=state["stat_mapping"]

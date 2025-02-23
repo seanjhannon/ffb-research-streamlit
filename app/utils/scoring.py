@@ -159,7 +159,7 @@ def calculate_fantasy_points_vec(df: pd.DataFrame, scoring_format: ScoringFormat
                 print(f"{column}: {df[column].head()}, {scoring_attribute}: {score_values[column]}")
 
     # Add the calculated fantasy points as a new column
-    df['fantasy_points'] = fantasy_points.round(2)
+    df['calc_fantasy_points'] = fantasy_points.round(2)
     return df
 
 
