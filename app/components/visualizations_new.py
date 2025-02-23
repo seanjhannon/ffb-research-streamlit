@@ -318,9 +318,11 @@ def Radar(state):
     st.write(fig)
 
 
-def CustomBar(player_data):
+def CustomBar(state):
     # Title
     st.subheader("Self-Service Bar Chart")
+
+    player_data = state["tables"]["player_data"]
 
     player_data_numeric = (player_data.drop(columns=[
         "season", "week", "fantasy_points", "fantasy_points_ppr"

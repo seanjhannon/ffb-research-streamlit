@@ -30,17 +30,17 @@ with charts_container:
         radar_container = st.container()
         with radar_container:
             viz.Radar(st.session_state.player_details)
-            st.markdown("""
-                <style>
-                    [data-testid="column"]:nth-child(2){
-                        background-color: lightgrey;
-                    }
-                </style>
-                """, unsafe_allow_html=True
-                        )
+            # st.markdown("""
+            #     <style>
+            #         [data-testid="column"]:nth-child(2){
+            #             background-color: lightgrey;
+            #         }
+            #     </style>
+            #     """, unsafe_allow_html=True
+            #             )
 
     with col2:
-        viz.CustomBar(st.session_state["tables"]["player_data"])
+        viz.CustomBar(st.session_state.player_details)
 
 
 
