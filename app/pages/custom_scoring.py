@@ -62,10 +62,3 @@ scoring_format_cols = st.columns(scoring_format_n_cols)
 for i in range(scoring_format_n_cols):
     with scoring_format_cols[i]:
         st.write(st.session_state.scoring_formats[i].to_markdown())
-
-
-
-
-
-# Optional: Provide a link back to the main page
-# st.page_link("app.py", label="Back to Main Page", icon="🏠")

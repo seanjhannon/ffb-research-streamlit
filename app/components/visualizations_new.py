@@ -6,16 +6,16 @@ import plotly.graph_objects as go
 
 
 def FormatSelector():
+
     st.selectbox('Select scoring format',
                  options=st.session_state.scoring_formats,
-
                  format_func=lambda x:x.name,
-                 key="selected_scoring_format_input",
-                 on_change=data_loader.update_state,
-                 args=("selected_scoring_format",)
+                 key=st.session_state["selected_scoring_format"],
+                 on_change=data_loader.build_tables_player_details,
+                 # args=(f"{page}.selected_scoring_format",)
                  )
 
-def Header():
+def Header(page_state):
 
     headshot_col, name_col, selectors_col = st.columns(3)
 
@@ -24,14 +24,14 @@ def Header():
 
         st.number_input('Choose a year',
                         min_value=1999,
-                        value=st.session_state.selected_year,
+                        value=page_state["user_input"]["selected_year"],
                         step=1,
                         key="selected_year_input",
                         on_change=data_loader.update_state,
                         args=("selected_year",)
                         )
 
-        display_names = st.session_state["tables"]["full_data"]['player_display_name'].unique().tolist()
+        display_names = page_state["tables"]["full_data"]['player_display_name'].unique().tolist()
 
         st.selectbox('Choose a player',
                      options = display_names,
@@ -40,15 +40,15 @@ def Header():
                      args=("selected_player",)
                      )
 
-        WeekSelector()
+        WeekSelector(page_state)
 
 
-    selected_player_firstname = st.session_state.selected_player.split(' ')[0]
-    selected_player_lastname = ' '.join(st.session_state.selected_player.split(' ')[1:]) # Handles juniors
+    selected_player_firstname = page_state["user_input"]["selected_player"].split(' ')[0]
+    selected_player_lastname = ' '.join(page_state["user_input"]["selected_player"].split(' ')[1:]) # Handles juniors
 
-    selected_player_headshot = st.session_state["tables"]["player_data"]['headshot_url'].iloc[0]
-    selected_player_position = st.session_state["tables"]["player_data"]['position'].iloc[0]
-    selected_player_team = st.session_state["tables"]["player_data"]['recent_team'].iloc[-1] #gets most recent value in case of a trade
+    selected_player_headshot = page_state["tables"]["player_data"]['headshot_url'].iloc[0]
+    selected_player_position = page_state["tables"]["player_data"]['position'].iloc[0]
+    selected_player_team = page_state["tables"]["player_data"]['recent_team'].iloc[-1] #gets most recent value in case of a trade
 
 
     with headshot_col:
@@ -63,8 +63,9 @@ def Header():
     return
 
 
-def WeekSelector():
-    all_weeks = st.session_state["tables"]["full_data"]['week'].unique().tolist()
+def WeekSelector(page_state):
+    k = page_state["user_input"]["selected_weeks"]
+    all_weeks = page_state["tables"]["full_data"]['week'].unique().tolist()
     if len(all_weeks) == 1:
         # Handle single week case
         return
@@ -74,9 +75,9 @@ def WeekSelector():
             "Select a range of weeks",
             min_value=min(all_weeks),
             max_value=max(all_weeks),
-            value= st.session_state.selected_weeks,  # Default to full range
+            value= k,  # Default to full range
             step=1,
-            key="selected_weeks_input",
+            key=k,
             on_change=data_loader.update_state,
             args=("selected_weeks",)
         )

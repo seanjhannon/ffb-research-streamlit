@@ -5,13 +5,11 @@ from streamlit import session_state
 import utils.data_loader as data_loader
 import utils.scoring as scoring
 import components.visualizations as viz
-from utils.scoring import StandardScoringFormat, PPRScoringFormat
+
 
 STAT_MAPPING = scoring.stat_mapping_nfl_py
 
 data_loader.initialize_state()
-
-st.set_page_config(layout="wide")
 
 # Display the header - contains headshot, name, and week/player selectors
 header_container = st.container(border=True)
