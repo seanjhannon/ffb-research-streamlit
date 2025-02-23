@@ -17,7 +17,6 @@ if "player_details" not in st.session_state:
 
 viz.Header(st.session_state.player_details)
 
-st.write(st.session_state.player_details["user_input"]["selected_player"])
 
 
 

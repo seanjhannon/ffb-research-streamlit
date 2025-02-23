@@ -58,7 +58,6 @@ def Header(page_state):
             )
         )
 
-        st.write(st.session_state.player_details["user_input"]["selected_player"]["name"])
         WeekSelector(page_state)
 
 

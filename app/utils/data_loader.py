@@ -33,7 +33,6 @@ def build_tables_player_details():
     """
     Populates the 'tables' dictionary initially. Should only be run once on page setup.
     """
-    st.write("running")
     if "tables" not in st.session_state.player_details:
         # Load the full data first
         full_data = load_data(st.session_state.player_details["user_input"]["selected_year"])
@@ -99,15 +98,12 @@ def refresh_child_tables_player_details():
     Refreshes just the player-specific tables, preventing a call to API.
     Should be run when selected player and weeks change.
     """
-    st.write('running refresh')
     state = st.session_state.player_details
     full_data = state["tables"]["full_data"]
 
     build_player_data_from_full(state, full_data)
     build_positional_tables_from_full(state, full_data)
 
-    # st.session_state.player_details["tables"] = state["tables"]
-    st.write('running refresh')
 
 def build_positional_tables_from_full(state, full_data):
 
