@@ -17,12 +17,3 @@ pages = [
 pg = st.navigation(pages)
 pg.run()
 
-
-
-
-# # App Title
-# st.title("Welcome to FFB Research Streamlit App")
-#
-# st.write("Use the sidebar to navigate between pages.")
-
-data_loader.initialize_state()

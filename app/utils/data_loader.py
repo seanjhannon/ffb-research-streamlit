@@ -19,14 +19,19 @@ def setup_state_player_details():
             "user_input": {
                 "selected_scoring_format": StandardScoringFormat(),
                 "selected_year": 2024,
-                "selected_player": "Justin Jefferson",
-                "selected_player_position": "WR",
-                "selected_weeks": (0, 16)
+                "selected_weeks": (0, 16),
+                "selected_player": {
+                    "name": "Justin Jefferson",
+                    "position": "WR"
+                }
             },
             "tables": {}
         }
 
 def build_tables_player_details():
+    """
+    Populates the 'tables' dictionary initially. Should only be run once on page setup.
+    """
     st.write("running")
     if "tables" not in st.session_state.player_details:
         # Load the full data first
@@ -44,49 +49,10 @@ def build_tables_player_details():
             "player_points_by_stat": None
         }
         st.session_state.player_details["tables"] = tables
-        update_tables_player_details()
+        update_all_tables_player_details()
 
     else:
-        update_tables_player_details()
-
-
-
-def initialize_state():
-    if "scoring_formats" not in st.session_state:
-        st.session_state.scoring_formats = [StandardScoringFormat(), PPRScoringFormat()]
-
-    if "selected_scoring_format" not in st.session_state:
-        st.session_state.selected_scoring_format = st.session_state.scoring_formats[0]  # Default to Standard
-
-    if "selected_year" not in st.session_state:
-        st.session_state.selected_year = 2024
-
-    if "selected_player" not in st.session_state:
-        st.session_state.selected_player = "Aaron Rodgers"
-
-    if "selected_weeks" not in st.session_state:
-        st.session_state.selected_weeks = (0, 16)
-
-    if "tables" not in st.session_state:
-        # Load the full data first
-        full_data = load_data(st.session_state.selected_year)
-
-        # Create the dictionary without self-referencing st.session_state["tables"]
-        tables = {
-            "full_data": full_data,
-            "positional_data": None,
-            "position_ranks_totals": None,
-            "position_ranks_averages": None,
-            "player_data": None,
-            "player_stat_totals": None,
-            "player_stat_averages": None,
-            "player_points_by_stat": None
-        }
-        st.session_state["tables"] = tables
-        update_tables()
-
-    else:
-        update_tables()
+        update_all_tables_player_details()
 
 
 
@@ -107,63 +73,11 @@ def update_state(var_name):
     if st.session_state[var_name] != st.session_state[f"{var_name}_input"]:
         st.session_state[var_name] = st.session_state[f"{var_name}_input"]
     if var_name in ["selected_year", "selected_scoring_format"]:
-        update_tables()
+        update_all_tables_player_details()
 
 
 
-def update_tables():
-    tables = st.session_state["tables"]  # Retrieve existing tables
-
-    selected_weeks = st.session_state.selected_weeks
-    selected_weeks_range = range(selected_weeks[0], selected_weeks[1]+1)
-
-    # Calculate Fantasy Points
-    full_data = load_data(st.session_state.selected_year)
-    full_data["calc_fantasy_points"] = full_data.apply(
-        lambda row: scoring.calculate_fantasy_points(row, st.session_state.selected_scoring_format, STAT_MAPPING),
-        axis=1
-    )
-    tables['full_data'] = full_data
-
-    # Ensure player data is found before extracting the position
-    player_data = full_data.query("player_display_name == @st.session_state.selected_player")
-    if player_data.empty:
-        st.warning(f"No data found for player: {st.session_state.selected_player}")
-        return
-
-    player_data = player_data.query("week in @selected_weeks_range")
-    # Update player-related tables
-    tables["player_data"] = player_data
-
-    tables["player_stat_totals"] = player_data.sum()
-    tables["player_stat_averages"] = player_data.mean(numeric_only=True)
-    tables["player_points_by_stat"] = scoring.calculate_fantasy_points_by_category(
-        player_data, scoring_format=st.session_state.selected_scoring_format, stat_mapping=STAT_MAPPING
-    )
-
-    st.session_state.selected_player_position = tables["player_data"]["position"].iloc[0]
-
-
-    # Ensure positional data is found before updating tables
-    positional_data = full_data.query("position == @st.session_state.selected_player_position")
-    if positional_data.empty:
-        st.warning(f"No positional data found for position: {st.session_state.selected_player_position}")
-        return
-
-    positional_data = positional_data.query("week in @selected_weeks_range")
-    # Update positional-related tables
-    tables["positional_data"] = positional_data
-
-    positional_totals = scoring.calculate_total_stats(positional_data)
-    tables["position_ranks_totals"] = scoring.make_position_ranks(positional_totals)
-
-    positional_averages = scoring.calculate_avg_stats(positional_data)
-    tables["position_ranks_averages"] = scoring.make_position_ranks(positional_averages)
-
-    # Store back to session state
-    st.session_state["tables"] = tables
-
-def update_tables_player_details():
+def update_all_tables_player_details():
     """
     Rebuilds all tables in the 'tables' dict of the player_details state.
     Should only be run when the year or scoring format changes.
@@ -180,14 +94,54 @@ def update_tables_player_details():
     )
     state["tables"]["full_data"] = full_data
 
-    # Filter for the selected player
-    player_data = full_data.query("player_display_name == @user_input['selected_player']")
-    if player_data.empty:
-        st.warning(f"No data found for player: {user_input['selected_player']}")
+    build_player_data_from_full(state, full_data)
+    build_positional_tables_from_full(state, full_data)
+
+    # st.session_state.player_details["tables"] = state["tables"]
+
+def refresh_child_tables_player_details():
+    """
+    Refreshes just the player-specific tables, preventing a call to API.
+    Should be run when selected player and weeks change.
+    """
+    st.write('running refresh')
+    state = st.session_state.player_details
+    full_data = state["tables"]["full_data"]
+
+    build_player_data_from_full(state, full_data)
+    build_positional_tables_from_full(state, full_data)
+
+    # st.session_state.player_details["tables"] = state["tables"]
+    st.write('running refresh')
+
+def build_positional_tables_from_full(state, full_data):
+
+    player_position = state["user_input"]["selected_player"]['position']
+    week_range = range(state["user_input"]['selected_weeks'][0], state["user_input"]['selected_weeks'][1] + 1)
+    positional_data = full_data.query(
+        "position == @player_position and week in @week_range")
+    if positional_data.empty:
+        st.warning(f"No positional data found for position: {player_position}")
         return
 
-    tables = state["tables"]
-    tables.update({
+    # Update positional tables
+    state["tables"].update({
+        "positional_data": positional_data,
+        "position_ranks_totals": scoring.make_position_ranks(scoring.calculate_total_stats(positional_data)),
+        "position_ranks_averages": scoring.make_position_ranks(scoring.calculate_avg_stats(positional_data))
+    })
+
+
+
+
+def build_player_data_from_full(state, full_data):
+    player_data = full_data.query("player_display_name == @state['user_input']['selected_player']['name']")
+    if player_data.empty:
+        st.warning(f"No data found for player: {state['user_input']['selected_player']['name']}")
+        return
+
+
+    state["tables"].update({
         "player_data": player_data,
         "player_stat_totals": player_data.sum(),
         "player_stat_averages": player_data.mean(numeric_only=True),
@@ -196,24 +150,37 @@ def update_tables_player_details():
         )
     })
 
-    # Filter for positional data
-    player_position = tables["player_data"]["position"].iloc[0]
 
-    week_range = range(user_input['selected_weeks'][0], user_input['selected_weeks'][1] + 1)
-    positional_data = full_data.query(
-        "position == @player_position and week in @week_range")
-    if positional_data.empty:
-        st.warning(f"No positional data found for position: {player_position}")
-        return
+def update_nested_state(nested_keys, new_value):
+    """
+    Given a list of nested keys (e.g. ["user_input", "selected_player", "name"]),
+    updates st.session_state["player_details"] at that nested location with new_value.
+    """
+    d = st.session_state["player_details"]
+    for key in nested_keys[:-1]:
+        d = d[key]
+    d[nested_keys[-1]] = new_value
 
-    # Update positional tables
-    tables.update({
-        "positional_data": positional_data,
-        "position_ranks_totals": scoring.make_position_ranks(scoring.calculate_total_stats(positional_data)),
-        "position_ranks_averages": scoring.make_position_ranks(scoring.calculate_avg_stats(positional_data))
-    })
 
-    state["tables"] = tables
+def generic_on_change(flat_key, nested_keys, update_funcs=None):
+    """
+    A generic on_change callback that:
+      1. Reads the new value from st.session_state[flat_key]
+      2. Updates st.session_state["player_details"] at the location specified by nested_keys
+      3. Calls any extra update functions.
+
+    Args:
+      flat_key (str): The key used by the widget (a flat key).
+      nested_keys (list): The path to the value in the nested state structure.
+      update_funcs (list): Optional list of functions to run after updating state.
+    """
+    new_value = st.session_state.get(flat_key)
+    update_nested_state(nested_keys, new_value)
+    # Optionally, run additional update functions
+    if update_funcs:
+        for func in update_funcs:
+            func()
+
 
 
 

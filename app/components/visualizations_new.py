@@ -11,9 +11,10 @@ def FormatSelector():
                  options=st.session_state.scoring_formats,
                  format_func=lambda x:x.name,
                  key=st.session_state["selected_scoring_format"],
-                 on_change=data_loader.build_tables_player_details,
-                 # args=(f"{page}.selected_scoring_format",)
+                 on_change=data_loader.update_all_tables_player_details,
                  )
+
+
 
 def Header(page_state):
 
@@ -26,25 +27,31 @@ def Header(page_state):
                         min_value=1999,
                         value=page_state["user_input"]["selected_year"],
                         step=1,
-                        key="selected_year_input",
-                        on_change=data_loader.update_state,
-                        args=("selected_year",)
+                        key=st.session_state.player_details["user_input"]["selected_year"],
+                        on_change=data_loader.update_all_tables_player_details,
                         )
 
         display_names = page_state["tables"]["full_data"]['player_display_name'].unique().tolist()
 
-        st.selectbox('Choose a player',
-                     options = display_names,
-                     key="selected_player_input",
-                     on_change=data_loader.update_state,
-                     args=("selected_player",)
-                     )
 
+        st.selectbox(
+            "Choose a player",
+            options=display_names,
+            key="player_select",  # This is the flat key where Streamlit stores the value
+            on_change=data_loader.generic_on_change,
+            args=(
+                "player_select",  # flat key
+                ["user_input", "selected_player", "name"],  # nested path inside player_details
+                [data_loader.refresh_child_tables_player_details]  # any extra functions to run
+            )
+        )
+
+        st.write(st.session_state.player_details["user_input"]["selected_player"]["name"])
         WeekSelector(page_state)
 
 
-    selected_player_firstname = page_state["user_input"]["selected_player"].split(' ')[0]
-    selected_player_lastname = ' '.join(page_state["user_input"]["selected_player"].split(' ')[1:]) # Handles juniors
+    selected_player_firstname = page_state["user_input"]["selected_player"]["name"].split(' ')[0]
+    selected_player_lastname = ' '.join(page_state["user_input"]["selected_player"]["name"].split(' ')[1:]) # Handles juniors
 
     selected_player_headshot = page_state["tables"]["player_data"]['headshot_url'].iloc[0]
     selected_player_position = page_state["tables"]["player_data"]['position'].iloc[0]
