@@ -1,10 +1,8 @@
 import streamlit as st
 from utils.scoring import ScoringFormat
+import utils.data_loader as data_loader
 
 st.title("Create Custom Scoring Format")
-
-# Initialize session state for custom scoring formats if not already set
-
 
 # Function to create and store a new custom scoring format
 def create_custom_scoring():
@@ -61,10 +59,3 @@ scoring_format_cols = st.columns(scoring_format_n_cols)
 for i in range(scoring_format_n_cols):
     with scoring_format_cols[i]:
         st.write(st.session_state.scoring_formats[i].to_markdown())
-
-
-
-
-
-# Optional: Provide a link back to the main page
-# st.page_link("app.py", label="Back to Main Page", icon="🏠")

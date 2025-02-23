@@ -28,6 +28,14 @@ class ScoringFormat:
     def __repr__(self):
         return f"ScoringFormat(name={self.name}, values={self.values})"
 
+    def __eq__(self, other):
+        if isinstance(other, ScoringFormat):
+            return self.name == other.name and self.values == other.values
+        return False
+
+    def __hash__(self):
+        return hash((self.name, tuple(sorted(self.values.items()))))
+
     def to_markdown(self):
         """
         Returns a markdown-friendly string representation of the scoring format.
@@ -133,6 +141,26 @@ def calculate_fantasy_points(stats_row: pd.Series, scoring_format: ScoringFormat
                 print(f"{column}: {stat_value}, {scoring_attribute}: {score_value}")
 
     return round(total_points, 2)
+
+
+def calculate_fantasy_points_vec(df: pd.DataFrame, scoring_format: ScoringFormat, stat_mapping: dict,
+                             debug=False) -> pd.DataFrame:
+    """Calculates and adds a 'fantasy_points' column to the DataFrame based on the provided scoring format."""
+    # Create a series for scoring values based on the stat_mapping
+    score_values = {column: scoring_format.get_value(scoring_attribute) for column, scoring_attribute in
+                    stat_mapping.items()}
+
+    # Calculate fantasy points using vectorized operations
+    fantasy_points = sum(df[column] * score_values[column] for column in stat_mapping if column in df)
+
+    if debug:
+        for column, scoring_attribute in stat_mapping.items():
+            if column in df:
+                print(f"{column}: {df[column].head()}, {scoring_attribute}: {score_values[column]}")
+
+    # Add the calculated fantasy points as a new column
+    df['calc_fantasy_points'] = fantasy_points.round(2)
+    return df
 
 
 def calculate_fantasy_points_by_category(

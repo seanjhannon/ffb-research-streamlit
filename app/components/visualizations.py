@@ -5,39 +5,68 @@ import numpy as np
 import plotly.graph_objects as go
 
 
-def Header():
+def FormatSelector():
+    st.selectbox(
+        'Select scoring format',
+        options=st.session_state.scoring_formats,
+        format_func=lambda x: x.name,
+        key="selected_scoring_format",  # Flat key in st.session_state
+        on_change=data_loader.generic_on_change,
+        args=(
+            "selected_scoring_format",    # Flat key to look up the new value
+            None,                         # No nested remapping needed
+            [data_loader.update_all_tables_player_details]  # Extra update functions
+        )
+    )
 
 
+
+def Header(page_state):
 
     headshot_col, name_col, selectors_col = st.columns(3)
 
     with selectors_col:
+        FormatSelector()
 
-        st.number_input('Choose a year',
-                        min_value=1999,
-                        value=st.session_state.selected_year,
-                        step=1,
-                        key="selected_year_input",
-                        on_change=data_loader.update_state,
-                        args=("selected_year",)
-                        )
+        st.number_input(
+            'Choose a year',
+            min_value=1999,
+            value=page_state["user_input"]["selected_year"],
+            step=1,
+            key="selected_year",  # flat key
+            on_change=data_loader.generic_on_change,
+            args=(
+                "selected_year",                # flat key
+                ["user_input", "selected_year"],  # nested path
+                [data_loader.update_all_tables_player_details]
+            )
+        )
 
-        display_names = st.session_state["tables"]["full_data"]['player_display_name'].unique().tolist()
-
-        st.selectbox('Choose a player',
-                     options = display_names,
-                     key="selected_player_input",
-                     on_change=data_loader.update_state,
-                     args=("selected_player",)
-                     )
+        display_names = page_state["tables"]["full_data"]['player_display_name'].unique().tolist()
 
 
-    selected_player_firstname = st.session_state.selected_player.split(' ')[0]
-    selected_player_lastname = ' '.join(st.session_state.selected_player.split(' ')[1:]) # Handles juniors
+        st.selectbox(
+            "Choose a player",
+            options=display_names,
+            key="player_select",  # This is the flat key where Streamlit stores the value
+            on_change=data_loader.generic_on_change,
+            args=(
+                "player_select",  # flat key
+                ["user_input", "selected_player", "name"],  # nested path inside player_details
+                [data_loader.refresh_child_tables_player_details,
+                 ]  # any extra functions to run
+            )
+        )
 
-    selected_player_headshot = st.session_state["tables"]["player_data"]['headshot_url'].iloc[0]
-    selected_player_position = st.session_state["tables"]["player_data"]['position'].iloc[0]
-    selected_player_team = st.session_state["tables"]["player_data"]['recent_team'].iloc[-1] #gets most recent value in case of a trade
+        WeekSelector(page_state)
+
+
+    selected_player_firstname = page_state["user_input"]["selected_player"]["name"].split(' ')[0]
+    selected_player_lastname = ' '.join(page_state["user_input"]["selected_player"]["name"].split(' ')[1:]) # Handles juniors
+
+    selected_player_headshot = page_state["tables"]["player_data"]['headshot_url'].iloc[0]
+    selected_player_position = page_state["tables"]["player_data"]['position'].iloc[0]
+    selected_player_team = page_state["tables"]["player_data"]['recent_team'].iloc[-1] #gets most recent value in case of a trade
 
 
     with headshot_col:
@@ -52,25 +81,27 @@ def Header():
     return
 
 
-def WeekSelector():
-    all_weeks = st.session_state["tables"]["full_data"]['week'].unique().tolist()
+
+def WeekSelector(page_state):
+    current_weeks = page_state["user_input"]["selected_weeks"]
+    all_weeks = page_state["tables"]["full_data"]['week'].unique().tolist()
     if len(all_weeks) == 1:
-        # Handle single week case
         return
     else:
-        # Handle normal case with a range of weeks
-        new_selected_weeks = st.slider(  # will eventually need to handle multiple years
+        st.slider(
             "Select a range of weeks",
             min_value=min(all_weeks),
             max_value=max(all_weeks),
-            value= st.session_state.selected_weeks,  # Default to full range
+            value=current_weeks,
             step=1,
-            key="selected_weeks_input",
-            on_change=data_loader.update_state,
-            args=("selected_weeks",)
+            key="selected_weeks",  # flat key for the slider widget
+            on_change=data_loader.generic_on_change,
+            args=(
+                "selected_weeks",
+                ["user_input", "selected_weeks"],
+                [data_loader.refresh_child_tables_player_details]  # assuming update_state refreshes your tables for the new week range
+            )
         )
-
-
     return
 
 
@@ -138,7 +169,11 @@ def get_position_kpis(position:str):
     return scoring_stats, opportunity_stats, advanced_stats
 ###############
 
-def make_cards_from_stats(stat_category: str, stat_dict):
+def make_cards_from_stats(state,
+                          stat_category: str,
+                          stat_dict):
+
+    selected_player_name = state["user_input"]["selected_player"]["name"]
     # Render the category header
     st.markdown(f"<h2 style='text-align: center;'>{stat_category}</h2>", unsafe_allow_html=True)
     # Return early if there are no stats to display
@@ -148,13 +183,11 @@ def make_cards_from_stats(stat_category: str, stat_dict):
     # Convert the dictionary keys to a list for predictable ordering
     keys = list(stat_dict.keys())
 
-    selected_player = st.session_state.selected_player
-
-    tables = st.session_state["tables"]
+    tables = state["tables"]
     player_totals = tables["player_stat_totals"]
-    player_totals_ranks = tables["position_ranks_totals"].query("player_display_name == @selected_player")
+    player_totals_ranks = tables["position_ranks_totals"].query("player_display_name == @selected_player_name")
     player_averages = tables["player_stat_averages"]
-    player_averages_ranks = tables["position_ranks_averages"].query("player_display_name == @selected_player")
+    player_averages_ranks = tables["position_ranks_averages"].query("player_display_name == @selected_player_name")
 
     # Decide the number of cards per row:
     # - If there are more than 3 stats, use 3 per row.
@@ -186,25 +219,28 @@ def make_cards_from_stats(stat_category: str, stat_dict):
                 )
 
 
-def ScoringKPIs():
+def ScoringKPIs(state):
 
-    selected_player_position = st.session_state["tables"]["player_data"]['position'].iloc[0]
 
+    selected_player_position = state["user_input"]["selected_player"]["position"]
     scoring_stats, opportunity_stats, advanced_stats = get_position_kpis(selected_player_position)
 
     scoring_kpis_cols = st.columns(3) # needs adjustment
 
     with scoring_kpis_cols[0]:
-        make_cards_from_stats(stat_category='Production',
+        make_cards_from_stats(state = state,
+                              stat_category='Production',
                               stat_dict=scoring_stats)
 
 
     with scoring_kpis_cols[1]:
-        make_cards_from_stats(stat_category='Opportunity',
+        make_cards_from_stats(state = state,
+                              stat_category='Opportunity',
                               stat_dict=opportunity_stats)
 
     with scoring_kpis_cols[2]:
-        make_cards_from_stats(stat_category='Advanced',
+        make_cards_from_stats(state = state,
+                              stat_category='Advanced',
                               stat_dict=advanced_stats)
 
 
@@ -239,7 +275,9 @@ def kpi_card(name: str, value, rank: int):
 
 
 
-def Radar(points_by_stat:pd.DataFrame):
+def Radar(state):
+
+    points_by_stat = state["tables"]["player_points_by_stat"]
     nonzero_points_series = points_by_stat[points_by_stat != 0]
 
     if nonzero_points_series.sum() == 0:
@@ -251,13 +289,17 @@ def Radar(points_by_stat:pd.DataFrame):
     values = nonzero_points_series.values.tolist()
     # List of corresponding values
 
+    st.subheader(f"How {state['user_input']['selected_player']['name']} Scores")
     fig = go.Figure()
 
     fig.add_trace(go.Scatterpolar(
         r=values,
         theta=categories,
         fill='toself',
-        name='Fantasy Scoring'
+        name='Fantasy Scoring',
+        hovertemplate='<b>Stat</b>: %{theta} <br>'
+                      '<b>Points Scored</b>: %{r}<br>'
+                      '<extra></extra>'
     ))
 
     # Dynamically adjust the range based on the values
@@ -270,23 +312,35 @@ def Radar(points_by_stat:pd.DataFrame):
             )
         ),
         showlegend=False,
-        title="Fantasy Football Scoring Breakdown",
+        # title="Fantasy Football Scoring Breakdown",
         template='plotly_dark'  # Optional: adds a dark theme to the chart
     )
     st.write(fig)
 
-def CustomBar(player_data):
-    # Title
-    st.title("Self-Service Bar Chart")
 
-    non_zero_columns = player_data.any(axis=0)
-    df_non_zero = player_data.loc[:, non_zero_columns]
+def CustomBar(state):
+    # Title
+    st.subheader("Self-Service Bar Chart")
+
+    player_data = state["tables"]["player_data"]
+
+    player_data_numeric = (player_data.drop(columns=[
+        "season", "week", "fantasy_points", "fantasy_points_ppr"
+    ]).rename(columns={"calc_fantasy_points": "fantasy_points"}).select_dtypes(include=np.number))
+
+    valid_cols = (player_data_numeric != 0).any() & player_data_numeric.notna().any()
+    df_non_zero = player_data_numeric.loc[:, valid_cols]
 
     # Dropdown to select y-axis column
-    y_column = st.selectbox("Select a column to graph (y-axis):", options=df_non_zero.columns.difference(["week"]))
+    y_column = st.selectbox(
+        "Select a column to graph (y-axis):",
+        options=df_non_zero.columns,
+        format_func=lambda col: col.replace("_", " ").title(),
+    )
 
-    # Plotting with Streamlit native bar chart
-    st.bar_chart(data=player_data.set_index("week")[[y_column]])
+    # Ensure we're plotting from df_non_zero
+    st.bar_chart(data=df_non_zero.set_index(player_data["week"])[[y_column]])
+
 
 
 
