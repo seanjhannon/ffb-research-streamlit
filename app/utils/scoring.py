@@ -28,6 +28,14 @@ class ScoringFormat:
     def __repr__(self):
         return f"ScoringFormat(name={self.name}, values={self.values})"
 
+    def __eq__(self, other):
+        if isinstance(other, ScoringFormat):
+            return self.name == other.name and self.values == other.values
+        return False
+
+    def __hash__(self):
+        return hash((self.name, tuple(sorted(self.values.items()))))
+
     def to_markdown(self):
         """
         Returns a markdown-friendly string representation of the scoring format.

@@ -6,13 +6,18 @@ import plotly.graph_objects as go
 
 
 def FormatSelector():
-
-    st.selectbox('Select scoring format',
-                 options=st.session_state.scoring_formats,
-                 format_func=lambda x:x.name,
-                 key=st.session_state["selected_scoring_format"],
-                 on_change=data_loader.update_all_tables_player_details,
-                 )
+    st.selectbox(
+        'Select scoring format',
+        options=st.session_state.scoring_formats,
+        format_func=lambda x: x.name,
+        key="selected_scoring_format",  # Flat key in st.session_state
+        on_change=data_loader.generic_on_change,
+        args=(
+            "selected_scoring_format",    # Flat key to look up the new value
+            None,                         # No nested remapping needed
+            [data_loader.update_all_tables_player_details]  # Extra update functions
+        )
+    )
 
 
 
@@ -23,13 +28,19 @@ def Header(page_state):
     with selectors_col:
         FormatSelector()
 
-        st.number_input('Choose a year',
-                        min_value=1999,
-                        value=page_state["user_input"]["selected_year"],
-                        step=1,
-                        key=st.session_state.player_details["user_input"]["selected_year"],
-                        on_change=data_loader.update_all_tables_player_details,
-                        )
+        st.number_input(
+            'Choose a year',
+            min_value=1999,
+            value=page_state["user_input"]["selected_year"],
+            step=1,
+            key="selected_year",  # flat key
+            on_change=data_loader.generic_on_change,
+            args=(
+                "selected_year",                # flat key
+                ["user_input", "selected_year"],  # nested path
+                [data_loader.update_all_tables_player_details]
+            )
+        )
 
         display_names = page_state["tables"]["full_data"]['player_display_name'].unique().tolist()
 
@@ -42,7 +53,8 @@ def Header(page_state):
             args=(
                 "player_select",  # flat key
                 ["user_input", "selected_player", "name"],  # nested path inside player_details
-                [data_loader.refresh_child_tables_player_details]  # any extra functions to run
+                [data_loader.refresh_child_tables_player_details,
+                 ]  # any extra functions to run
             )
         )
 
@@ -70,26 +82,27 @@ def Header(page_state):
     return
 
 
+
 def WeekSelector(page_state):
-    k = page_state["user_input"]["selected_weeks"]
+    current_weeks = page_state["user_input"]["selected_weeks"]
     all_weeks = page_state["tables"]["full_data"]['week'].unique().tolist()
     if len(all_weeks) == 1:
-        # Handle single week case
         return
     else:
-        # Handle normal case with a range of weeks
-        new_selected_weeks = st.slider(  # will eventually need to handle multiple years
+        st.slider(
             "Select a range of weeks",
             min_value=min(all_weeks),
             max_value=max(all_weeks),
-            value= k,  # Default to full range
+            value=current_weeks,
             step=1,
-            key=k,
-            on_change=data_loader.update_state,
-            args=("selected_weeks",)
+            key="selected_weeks",  # flat key for the slider widget
+            on_change=data_loader.generic_on_change,
+            args=(
+                "selected_weeks",
+                ["user_input", "selected_weeks"],
+                [data_loader.refresh_child_tables_player_details]  # assuming update_state refreshes your tables for the new week range
+            )
         )
-
-
     return
 
 

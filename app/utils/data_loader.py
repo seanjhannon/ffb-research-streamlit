@@ -7,8 +7,10 @@ STAT_MAPPING = scoring.stat_mapping_nfl_py
 
 
 def setup_state_main():
-    st.session_state.scoring_formats = [StandardScoringFormat(), PPRScoringFormat()]
-    st.session_state["selected_scoring_format"] = st.session_state.scoring_formats[0]
+    if "scoring_formats" not in st.session_state:
+        st.session_state.scoring_formats = [StandardScoringFormat(), PPRScoringFormat()]
+    if "selected_scoring_format" not in st.session_state:
+        st.session_state["selected_scoring_format"] = st.session_state.scoring_formats[0]
 
 
 def setup_state_player_details():
@@ -17,7 +19,6 @@ def setup_state_player_details():
             "page": "player_details",
             "stat_mapping": scoring.stat_mapping_nfl_py,
             "user_input": {
-                "selected_scoring_format": StandardScoringFormat(),
                 "selected_year": 2024,
                 "selected_weeks": (0, 16),
                 "selected_player": {
@@ -69,12 +70,6 @@ def load_data(years):
     return nfl.import_weekly_data(year_range, downcast=True)
 
 
-def update_state(var_name):
-    if st.session_state[var_name] != st.session_state[f"{var_name}_input"]:
-        st.session_state[var_name] = st.session_state[f"{var_name}_input"]
-    if var_name in ["selected_year", "selected_scoring_format"]:
-        update_all_tables_player_details()
-
 
 
 def update_all_tables_player_details():
@@ -89,7 +84,7 @@ def update_all_tables_player_details():
     # Load full season data and calculate fantasy points
     full_data = scoring.calculate_fantasy_points_vec(
         load_data(user_input["selected_year"]),
-        user_input["selected_scoring_format"],
+        st.session_state["selected_scoring_format"],
         state["stat_mapping"]
     )
     state["tables"]["full_data"] = full_data
@@ -149,39 +144,46 @@ def build_player_data_from_full(state, full_data):
             player_data, scoring_format=st.session_state.selected_scoring_format, stat_mapping=state["stat_mapping"]
         )
     })
+    # Do this here because I can't think of a better solution lol
+    state["user_input"]["selected_player"]["position"] =  player_data['position'].iloc[0]
 
 
-def update_nested_state(nested_keys, new_value):
+def update_nested_state(nested_dict, key_path, new_value):
     """
-    Given a list of nested keys (e.g. ["user_input", "selected_player", "name"]),
-    updates st.session_state["player_details"] at that nested location with new_value.
-    """
-    d = st.session_state["player_details"]
-    for key in nested_keys[:-1]:
-        d = d[key]
-    d[nested_keys[-1]] = new_value
-
-
-def generic_on_change(flat_key, nested_keys, update_funcs=None):
-    """
-    A generic on_change callback that:
-      1. Reads the new value from st.session_state[flat_key]
-      2. Updates st.session_state["player_details"] at the location specified by nested_keys
-      3. Calls any extra update functions.
+    Recursively updates a nested dictionary given a key path.
 
     Args:
-      flat_key (str): The key used by the widget (a flat key).
-      nested_keys (list): The path to the value in the nested state structure.
-      update_funcs (list): Optional list of functions to run after updating state.
+      nested_dict (dict): The dictionary to update (e.g. st.session_state["player_details"]).
+      key_path (list): A list of keys representing the nested path.
+      new_value: The new value to set.
+    """
+    d = nested_dict
+    for key in key_path[:-1]:
+        if key not in d or not isinstance(d[key], dict):
+            d[key] = {}
+        d = d[key]
+    d[key_path[-1]] = new_value
+
+
+def generic_on_change(flat_key, nested_keys=None, update_funcs=None):
+    """
+    Generic on_change callback that updates either a top-level key or a nested key
+    in st.session_state and then runs additional functions.
+
+    Args:
+      flat_key (str): The key in st.session_state where the widget writes its value.
+      nested_keys (list or None): If provided, the nested path inside st.session_state["player_details"] to update.
+                                   If None, the value remains at the top level.
+      update_funcs (list): Optional list of functions to call after updating.
     """
     new_value = st.session_state.get(flat_key)
-    update_nested_state(nested_keys, new_value)
-    # Optionally, run additional update functions
+
+    if nested_keys is not None:
+        update_nested_state(st.session_state["player_details"], nested_keys, new_value)
+        print(f"Updated nested key {' -> '.join(nested_keys)} to {new_value}")
+    else:
+        print(f"Updated top-level key {flat_key} to {new_value}")
+
     if update_funcs:
         for func in update_funcs:
             func()
-
-
-
-
-
