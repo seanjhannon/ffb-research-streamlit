@@ -6,6 +6,7 @@ import utils.scoring as scoring
 import components.visualizations as viz
 import utils.data_loader_new as data_loader_experimental
 import components.selectas as selectas
+import components.kpi as kpi
 
 
 
@@ -33,5 +34,7 @@ with header_container:
         selectas.week_selector("player_details")
 
 
-
+scoring_kpis_container = st.container(border=True)
+with scoring_kpis_container:
+    kpi.player_kpis("player_details")
 
