@@ -8,9 +8,8 @@ data_loader.setup_state_main() # Create necessary state variables for boot
 
 pages = [
     st.Page("pages/custom_scoring.py", title="Custom Scoring"),
-    st.Page("pages/player_details.py", title="Details new"),
     st.Page("pages/player_comparison.py", title="player comp"),
-    st.Page("pages/player_details_new.py", title="Details WIP")
+    st.Page("pages/player_details.py", title="Details WIP")
 
 ]
 

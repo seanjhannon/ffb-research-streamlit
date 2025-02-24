@@ -69,31 +69,6 @@ def custom_bar(page_key,
     st.bar_chart(data=df_non_zero.set_index(player_data["week"])[[y_column]])
 
 
-def CustomBar(state):
-    # Title
-    st.subheader("Self-Service Bar Chart")
-
-    player_data = state["tables"]["player_data"]
-
-    player_data_numeric = (player_data.drop(columns=[
-        "season", "week", "fantasy_points", "fantasy_points_ppr"
-    ]).rename(columns={"calc_fantasy_points": "fantasy_points"}).select_dtypes(include=np.number))
-
-    valid_cols = (player_data_numeric != 0).any() & player_data_numeric.notna().any()
-    df_non_zero = player_data_numeric.loc[:, valid_cols]
-
-    # Dropdown to select y-axis column
-    y_column = st.selectbox(
-        "Select a column to graph (y-axis):",
-        options=df_non_zero.columns,
-        format_func=lambda col: col.replace("_", " ").title(),
-    )
-
-    # Ensure we're plotting from df_non_zero
-    st.bar_chart(data=df_non_zero.set_index(player_data["week"])[[y_column]])
-
-
-
 
 
 
