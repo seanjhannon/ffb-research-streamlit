@@ -56,21 +56,21 @@ def year_selector(page_key: str):
     )
 
 
-    def player_selector(page_key: str,
-                        player_index:int=0):
-        """
-        Displays a selectbox for choosing a player.
+def player_selector(page_key: str,
+                    player_index:int=0):
+    """
+    Displays a selectbox for choosing a player.
 
-        Args:
-            page_key (str): The key to identify the page's state.
-            :param player_index: where in the state's list of players this guy sits.
-        """
-        all_players = getattr(st.session_state, page_key)["full_data"]["player_display_name"].unique()
-        st.selectbox(
-            "Choose Player",
-            options=all_players,
-            index=all_players.tolist().index(getattr(st.session_state, page_key)["players"][player_index]["name"]),
-            key=f"selected_player_{player_index}",
-            on_change=data_loader_experimental.handle_player_change,
-            args=(page_key, player_index,)
-        )
+    Args:
+        page_key (str): The key to identify the page's state.
+        :param player_index: where in the state's list of players this guy sits.
+    """
+    all_players = getattr(st.session_state, page_key)["full_data"]["player_display_name"].unique()
+    st.selectbox(
+        "Choose Player",
+        options=all_players,
+        index=all_players.tolist().index(getattr(st.session_state, page_key)["players"][player_index]["name"]),
+        key=f"selected_player_{player_index}",
+        on_change=data_loader_experimental.handle_player_change,
+        args=(page_key, player_index,)
+    )

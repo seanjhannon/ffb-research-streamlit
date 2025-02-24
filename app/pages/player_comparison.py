@@ -2,7 +2,7 @@ import streamlit as st
 import utils.data_loader as data_loader
 import components.visualizations as viz
 import utils.data_loader_new as data_loader_experimental
-import selectas
+import components.selectas as selectas
 
 if "player_comparison" not in st.session_state:
     data_loader_experimental.init_state("player_comparison", default_players=[
@@ -42,7 +42,6 @@ with comparison_columns[0]:
 
 
 with comparison_columns[1]:
-    st.write('player_2')
     selectas.player_selector("player_comparison", 1)
 
     st.write(st.session_state.player_comparison["players"][1]["tables"]["player_data"])
