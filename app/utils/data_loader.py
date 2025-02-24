@@ -59,7 +59,6 @@ def setup_state_player_comparison():
         }
 
 
-
 @st.cache_data(show_spinner="Loading data ...")
 def load_data(years):
     if years is None:
@@ -216,3 +215,7 @@ def generic_on_change(flat_key, nested_keys=None, update_funcs=None):
                 func(*args)
             else:
                 func_item()  # Call function normally if no arguments are provided
+
+
+
+
