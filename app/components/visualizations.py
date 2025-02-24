@@ -6,6 +6,10 @@ import plotly.graph_objects as go
 
 
 def FormatSelector():
+    """
+    Changes the chosen scoring format at a global level.
+    :return:
+    """
     st.selectbox(
         'Select scoring format',
         options=st.session_state.scoring_formats,
@@ -15,7 +19,7 @@ def FormatSelector():
         args=(
             "selected_scoring_format",    # Flat key to look up the new value
             None,                         # No nested remapping needed
-            [data_loader.update_all_tables_player_details]  # Extra update functions
+            [(data_loader.update_all_tables_player_details, st.session_state)]  # Extra update functions
         )
     )
 
@@ -38,7 +42,7 @@ def Header(page_state):
             args=(
                 "selected_year",                # flat key
                 ["user_input", "selected_year"],  # nested path
-                [data_loader.update_all_tables_player_details]
+                [(data_loader.update_all_tables_player_details, page_state)]
             )
         )
 

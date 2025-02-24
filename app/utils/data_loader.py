@@ -14,45 +14,49 @@ def setup_state_main():
 
 
 def setup_state_player_details():
-    if "player_details" not in st.session_state:
-        st.session_state.player_details = {
-            "page": "player_details",
-            "stat_mapping": scoring.stat_mapping_nfl_py,
+    st.session_state.player_details = {
+        "page": "player_details",
+        "stat_mapping": scoring.stat_mapping_nfl_py,
+        "user_input": {
+            "selected_year": 2024,
+            "selected_weeks": (0, 16),
+            "selected_player": {
+                "name": "Aaron Rodgers",
+                "position": "QB"
+            }
+        },
+        "tables": {}
+    }
+
+def setup_state_player_comparison():
+    if "player_comparison" not in st.session_state:
+        st.session_state.player_comparison = {
             "user_input": {
+                "page": "player_comparison",
                 "selected_year": 2024,
                 "selected_weeks": (0, 16),
-                "selected_player": {
-                    "name": "Aaron Rodgers",
-                    "position": "QB"
-                }
+                "stat_mapping": scoring.stat_mapping_nfl_py,
             },
-            "tables": {}
+            "tables": {},
+            "player_a": {
+                "user_input": {
+                    "selected_player": {
+                        "name": "Aaron Rodgers",
+                        "position": "QB"
+                    }
+                },
+                "tables": {}
+        },
+            "player_b": {
+                "user_input": {
+                    "selected_player": {
+                        "name": "Sam Darnold",
+                        "position": "QB"
+                    }
+                },
+                "tables": {}
+            },
         }
-
-def build_tables_player_details():
-    """
-    Populates the 'tables' dictionary initially. Should only be run once on page setup.
-    """
-    if "tables" not in st.session_state.player_details:
-        # Load the full data first
-        full_data = load_data(st.session_state.player_details["user_input"]["selected_year"])
-
-        # Create the dictionary without self-referencing st.session_state["tables"]
-        tables = {
-            "full_data": full_data,
-            "positional_data": None,
-            "position_ranks_totals": None,
-            "position_ranks_averages": None,
-            "player_data": None,
-            "player_stat_totals": None,
-            "player_stat_averages": None,
-            "player_points_by_stat": None
-        }
-        st.session_state.player_details["tables"] = tables
-        update_all_tables_player_details()
-
-    else:
-        update_all_tables_player_details()
 
 
 
@@ -69,29 +73,50 @@ def load_data(years):
     return nfl.import_weekly_data(year_range, downcast=True)
 
 
-
-
-def update_all_tables_player_details():
+def update_all_tables_player_comparison(state):
     """
-    Rebuilds all tables in the 'tables' dict of the player_details state.
-    Should only be run when the year or scoring format changes.
-    Changes in player and week are processed as filters on the full_data table and its child tables.
+    Puts full_data in the top level of the page state then triggers all child tables to be built for comparison.
+    Should run when initializing the page and whenever user changes scoring format or year.
     """
-    state = st.session_state.player_details
     user_input = state["user_input"]
-
-    # Load full season data and calculate fantasy points
     full_data = scoring.calculate_fantasy_points_vec(
         load_data(user_input["selected_year"]),
         st.session_state["selected_scoring_format"],
         state["stat_mapping"]
     )
-    state["tables"]["full_data"] = full_data
+    state["tables"].update({"full_data": full_data})
+    # Call helpers to rebuild tables for player a and b
 
-    build_player_data_from_full(state, full_data)
-    build_positional_tables_from_full(state, full_data)
+def update_player_tables_comparison():
+    """
+    Creates the following tables for a given player in the comparison based off of the values in state:
+        - player_data
+        - player_stat_totals
+        - player_stat_averages
+        - player_points_by_stat
 
-    # st.session_state.player_details["tables"] = state["tables"]
+    """
+    # Get full data
+
+
+def update_all_tables_player_details(state):
+    """
+    Rebuilds all tables in the 'tables' dict of the player_details state.
+    Should only be run when the year or scoring format changes.
+    Changes in player and week are processed as filters on the full_data table and its child tables.
+    """
+    if "user_input" in state:
+        user_input = state["user_input"]
+        # Load full season data and calculate fantasy points
+        full_data = scoring.calculate_fantasy_points_vec(
+            load_data(user_input["selected_year"]),
+            st.session_state["selected_scoring_format"],
+            state["stat_mapping"]
+        )
+        state["tables"].update({"full_data": full_data})
+        build_player_data_from_full(state, full_data)
+        build_positional_tables_from_full(state, full_data)
+
 
 def refresh_child_tables_player_details():
     """
@@ -135,7 +160,6 @@ def build_player_data_from_full(state, full_data):
     if player_data.empty:
         st.warning(f"No data found for player: {state['user_input']['selected_player']['name']}")
         return
-
 
     state["tables"].update({
         "player_data": player_data,
@@ -186,5 +210,9 @@ def generic_on_change(flat_key, nested_keys=None, update_funcs=None):
         print(f"Updated top-level key {flat_key} to {new_value}")
 
     if update_funcs:
-        for func in update_funcs:
-            func()
+        for func_item in update_funcs:
+            if isinstance(func_item, tuple):  # Handle functions with arguments
+                func, *args = func_item
+                func(*args)
+            else:
+                func_item()  # Call function normally if no arguments are provided

@@ -11,7 +11,7 @@ STAT_MAPPING = scoring.stat_mapping_nfl_py
 
 if "player_details" not in st.session_state:
     data_loader.setup_state_player_details()
-    data_loader.build_tables_player_details()
+    data_loader.update_all_tables_player_details(st.session_state.player_details)
 
 # st.write(st.session_state.player_details)
 header_container = st.container(border=True)
