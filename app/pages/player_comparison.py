@@ -81,8 +81,37 @@ comparison_columns = st.columns(2)
 
 
 with comparison_columns[0]:
-    st.write('player_1')
-    st.write(st.session_state.player_comparison["players"][0]["tables"]["player_data"])
+    def player_selector(page_key: str,
+                             player_index:int=0):
+        """
+        Displays a selectbox for choosing a player.
+
+        Args:
+            page_key (str): The key to identify the page's state.
+        """
+        all_players = getattr(st.session_state, page_key)["full_data"]["player_display_name"].unique()
+        st.selectbox(
+            "Choose Player",
+            options=all_players,
+            index=all_players.tolist().index(getattr(st.session_state, page_key)["players"][player_index]["name"]),
+            key=f"selected_player_{player_index}",
+            on_change=data_loader_experimental.handle_player_change,
+            args=(page_key, player_index,)
+        )
+    player_selector("player_comparison", 0)
+
+    player_data = st.session_state.player_comparison["players"][0]["tables"]["player_data"]
+    player_comp_header = st.container(border=True)
+    with player_comp_header:
+        player_comp_header_cols = st.columns([1,3])
+        with player_comp_header_cols[0]:
+            st.image(player_data["headshot_url"].iloc[0])
+        with player_comp_header_cols[1]:
+            with st.container():
+                st.write(player_data["position"].iloc[0])
+            with st.container():
+                st.write(player_data["player_display_name"].iloc[0])
+
 
 
     #Header
@@ -93,4 +122,6 @@ with comparison_columns[0]:
 
 with comparison_columns[1]:
     st.write('player_2')
+    player_selector("player_comparison", 1)
+
     st.write(st.session_state.player_comparison["players"][1]["tables"]["player_data"])

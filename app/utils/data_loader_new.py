@@ -154,3 +154,19 @@ def handle_week_change(page_key: str):
         state["selected_weeks"] = new_weeks
         update_player_tables(page_key)  # Reload data and update tables
 
+def handle_player_change(page_key: str,
+                         player_index:int=0):
+    """
+    Callback function for when the user selects a new format.
+    Updates the selected scoring format in session state and refreshes the data.
+    """
+    state = getattr(st.session_state, page_key)
+    new_player = st.session_state[f"selected_player_{player_index}"]
+
+    if new_player != state["players"][player_index]['name']:  # Only update if the year actually changes
+        state["players"][player_index]['name'] = new_player
+        state["players"][player_index]['position'] = state["full_data"].query(
+            "player_display_name == @new_player"
+        )["position"].iloc[0]
+        update_player_tables(page_key)  # Reload data and update tables
+
