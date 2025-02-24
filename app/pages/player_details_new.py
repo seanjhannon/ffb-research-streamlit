@@ -38,3 +38,5 @@ scoring_kpis_container = st.container(border=True)
 with scoring_kpis_container:
     kpi.player_kpis("player_details")
 
+viz.stat_radar("player_details")
+
