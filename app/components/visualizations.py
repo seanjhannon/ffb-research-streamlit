@@ -1,6 +1,5 @@
 import pandas as pd
 import streamlit as st
-import utils.data_loader as data_loader
 import numpy as np
 import plotly.graph_objects as go
 

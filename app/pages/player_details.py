@@ -1,10 +1,9 @@
 # On year select, load in that year's data - must cache
 import streamlit as st
 
-import utils.data_loader as data_loader
 import utils.scoring as scoring
 import components.visualizations as viz
-import utils.data_loader_new as data_loader_experimental
+import utils.data_loader as data_loader
 import components.selectas as selectas
 import components.kpi as kpi
 
@@ -13,7 +12,7 @@ import components.kpi as kpi
 
 
 if "player_details" not in st.session_state:
-    data_loader_experimental.init_state("player_details", default_players=[
+    data_loader.init_state("player_details", default_players=[
         {"name": "Olamide Zaccheaus", "position": "WR"},
     ])
 

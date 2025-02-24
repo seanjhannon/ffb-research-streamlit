@@ -1,7 +1,6 @@
 import streamlit as st
-import utils.data_loader as data_loader
 import components.visualizations as viz
-import utils.data_loader_new as data_loader_experimental
+import utils.data_loader as data_loader_experimental
 import components.selectas as selectas
 
 if "player_comparison" not in st.session_state:

@@ -1,5 +1,5 @@
 import streamlit as st
-import utils.data_loader_new as data_loader_experimental
+import utils.data_loader as data_loader_experimental
 
 def format_selector(page_key: str):
     """
