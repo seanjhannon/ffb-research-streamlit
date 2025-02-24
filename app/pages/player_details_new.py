@@ -40,3 +40,4 @@ with scoring_kpis_container:
 
 viz.stat_radar("player_details")
 
+viz.custom_bar("player_details")
