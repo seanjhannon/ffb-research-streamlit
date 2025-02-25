@@ -160,12 +160,7 @@ def handle_year_change(page_key: str):
     Callback function for when the user selects a new year.
     Updates the selected year in session state and refreshes the data.
     """
-    state = getattr(st.session_state, page_key)
-    new_year = st.session_state["selected_year"]
-
-    if new_year != state["selected_year"]:  # Only update if the year actually changes
-        state["selected_year"] = new_year
-        update_full_data(page_key)  # Reload data and update tables
+    handle_change(page_key, "selected_year", update_full_data)
 
 def handle_format_change(page_key: str):
     """
@@ -173,7 +168,6 @@ def handle_format_change(page_key: str):
     Updates the selected scoring format in session state and refreshes the data.
     """
     handle_change(page_key, "selected_scoring_format", update_full_data)
-    # update_full_data(page_key)  # Reload data and update tables
 
 
 def handle_week_change(page_key: str):
@@ -181,12 +175,7 @@ def handle_week_change(page_key: str):
     Callback function for when the user selects a new format.
     Updates the selected scoring format in session state and refreshes the data.
     """
-    state = getattr(st.session_state, page_key)
-    new_weeks = st.session_state["selected_weeks"]
-
-    if new_weeks != state["selected_weeks"]:  # Only update if the year actually changes
-        state["selected_weeks"] = new_weeks
-        update_player_tables(page_key)  # Reload data and update tables
+    handle_change(page_key, "selected_weeks", update_player_tables)
 
 def handle_player_change(page_key: str,
                          player_index:int=0):
@@ -202,5 +191,6 @@ def handle_player_change(page_key: str,
         state["players"][player_index]['position'] = state["full_data"].query(
             "player_display_name == @new_player"
         )["position"].iloc[0]
+        setattr(st.session_state, page_key, state)
         update_player_tables(page_key)  # Reload data and update tables
 
