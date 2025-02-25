@@ -1,5 +1,5 @@
 import streamlit as st
-import utils.data_loader as data_loader_experimental
+import utils.data_loader as data_loader
 
 def format_selector(page_key: str):
     """
@@ -14,7 +14,7 @@ def format_selector(page_key: str):
         index=st.session_state.scoring_formats.index(getattr(st.session_state, page_key)["selected_scoring_format"]),
         format_func=lambda x: x.name,
         key="selected_scoring_format",
-        on_change=data_loader_experimental.handle_format_change,
+        on_change=data_loader.handle_format_change,
         args=(page_key,)
     )
 
@@ -35,7 +35,7 @@ def week_selector(page_key: str):
             "Select a Range of Weeks",
             min_value=min(all_weeks), max_value=max(all_weeks), value=selected_weeks,
             step=1, key="selected_weeks",
-            on_change=data_loader_experimental.handle_week_change,
+            on_change=data_loader.handle_week_change,
             args=(page_key,)
         )
 
@@ -51,7 +51,7 @@ def year_selector(page_key: str):
         options=list(range(1999, 2025)),  # Year options from 1999 to 2024
         index=list(range(1999, 2025)).index(getattr(st.session_state, page_key)["selected_year"]),
         key="selected_year",
-        on_change=data_loader_experimental.handle_year_change,
+        on_change=data_loader.handle_year_change,
         args=(page_key,)
     )
 
@@ -71,6 +71,6 @@ def player_selector(page_key: str,
         options=all_players,
         index=all_players.tolist().index(getattr(st.session_state, page_key)["players"][player_index]["name"]),
         key=f"selected_player_{player_index}",
-        on_change=data_loader_experimental.handle_player_change,
+        on_change=data_loader.handle_player_change,
         args=(page_key, player_index,)
     )

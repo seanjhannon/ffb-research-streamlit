@@ -33,7 +33,7 @@ def setup_state_main():
 COMMON_STATE_TEMPLATE = {
     "selected_year": 2024,
     "selected_weeks": (0, 16),
-    "selected_scoring_format": PPRScoringFormat(),
+    "selected_scoring_format": None,
     "stat_mapping": scoring.stat_mapping_nfl_py,
     "players": [],
     "full_data": None,  # Updated separately.
@@ -62,7 +62,12 @@ def init_state(page_key: str, default_players: list = None):
                 player = copy.deepcopy(PLAYER_STATE_TEMPLATE)
                 player.update(player_info)
                 state["players"].append(player)
+        # set scoring format to the global value
+        state.update({"selected_scoring_format":st.session_state["selected_scoring_format"]})
         setattr(st.session_state, page_key, state)
+
+
+
     update_full_data(page_key)
 
 
@@ -74,7 +79,11 @@ def update_full_data(page_key: str):
     Args:
         page_key (str): The key to identify the page's state.
     """
+    st.write("updating full_data")
     state = getattr(st.session_state, page_key)
+
+    st.write(state["selected_scoring_format"])
+
     state["full_data"] = scoring.calculate_fantasy_points_vec(
         load_data(state["selected_year"]),
         state["selected_scoring_format"],
@@ -93,6 +102,7 @@ def update_player_tables(page_key:str):
     :param page_key:
     :return:
     """
+    st.write("updating player tables")
     state = getattr(st.session_state, page_key)
     week_range = range(state["selected_weeks"][0], state["selected_weeks"][1] + 1)
     full_data = state["full_data"].loc[state["full_data"]["week"].isin(week_range)]
@@ -127,6 +137,24 @@ def update_player_tables(page_key:str):
 
 # CALLBACKS
 
+def handle_change(page_key: str,
+                  attr_name:str,
+                  func=None):
+    """
+    Generic function for handling the updating of an attribute in state
+    :param page_key: top-level attribute for the page of the change
+    :param attr_name: the attribute to be changed
+    :param func: the table updating function to be called after the update is made
+    :return: None
+    """
+    state = getattr(st.session_state, page_key)
+    new_val = st.session_state[attr_name] #stash new value one level up as tmp
+    if new_val != state[attr_name]:
+        state["selected_scoring_format"] = new_val
+        setattr(st.session_state, page_key, state)
+        func(page_key)
+
+
 def handle_year_change(page_key: str):
     """
     Callback function for when the user selects a new year.
@@ -144,12 +172,8 @@ def handle_format_change(page_key: str):
     Callback function for when the user selects a new format.
     Updates the selected scoring format in session state and refreshes the data.
     """
-    state = getattr(st.session_state, page_key)
-    new_format = st.session_state["selected_scoring_format"]
-
-    if new_format != state["selected_scoring_format"]:  # Only update if the year actually changes
-        state["selected_scoring_format"] = new_format
-        update_full_data(page_key)  # Reload data and update tables
+    handle_change(page_key, "selected_scoring_format", update_full_data)
+    # update_full_data(page_key)  # Reload data and update tables
 
 
 def handle_week_change(page_key: str):

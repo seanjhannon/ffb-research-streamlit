@@ -25,7 +25,7 @@ def create_custom_scoring():
         submitted = st.form_submit_button("Create Custom Format")
 
     if submitted and name:
-        if name in st.session_state.custom_scoring_formats:
+        if name in st.session_state.scoring_formats:
             st.warning(f"A scoring format named '{name}' already exists. Choose a different name.")
         else:
             scoring_values = {
