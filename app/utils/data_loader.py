@@ -79,10 +79,7 @@ def update_full_data(page_key: str):
     Args:
         page_key (str): The key to identify the page's state.
     """
-    st.write("updating full_data")
     state = getattr(st.session_state, page_key)
-
-    st.write(state["selected_scoring_format"])
 
     state["full_data"] = scoring.calculate_fantasy_points_vec(
         load_data(state["selected_year"]),
@@ -102,7 +99,6 @@ def update_player_tables(page_key:str):
     :param page_key:
     :return:
     """
-    st.write("updating player tables")
     state = getattr(st.session_state, page_key)
     week_range = range(state["selected_weeks"][0], state["selected_weeks"][1] + 1)
     full_data = state["full_data"].loc[state["full_data"]["week"].isin(week_range)]
@@ -190,7 +186,7 @@ def handle_player_change(page_key: str,
         state["players"][player_index]['name'] = new_player
         state["players"][player_index]['position'] = state["full_data"].query(
             "player_display_name == @new_player"
-        )["position"].iloc[0]
+        )["position"].iloc[0] # update player position
         setattr(st.session_state, page_key, state)
         update_player_tables(page_key)  # Reload data and update tables
 
