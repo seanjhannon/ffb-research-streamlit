@@ -177,7 +177,6 @@ def calculate_fantasy_points_by_category(
     for column, scoring_attribute in stat_mapping.items():
         if column in stats_df.columns:
             # Multiply the relevant column by the scoring format value and sum the result
-            st.write(scoring_attribute)
             total_points_by_category[scoring_attribute] = (
                         stats_df[column] * scoring_format.get_value(scoring_attribute)).sum()
 

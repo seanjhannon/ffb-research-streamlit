@@ -146,7 +146,7 @@ def handle_change(page_key: str,
     state = getattr(st.session_state, page_key)
     new_val = st.session_state[attr_name] #stash new value one level up as tmp
     if new_val != state[attr_name]:
-        state["selected_scoring_format"] = new_val
+        state[attr_name] = new_val
         setattr(st.session_state, page_key, state)
         func(page_key)
 
