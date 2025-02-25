@@ -166,18 +166,18 @@ def player_kpis(page_key,
 
     scoring_kpis_cols = st.columns(3)
 
-    with scoring_kpis_cols[0]:
+    with st.container():
         make_cards_from_stats(player = player,
                               stat_category='Production',
                               stat_dict=scoring_stats)
 
 
-    with scoring_kpis_cols[1]:
+    with st.container():
         make_cards_from_stats(player = player,
                               stat_category='Opportunity',
                               stat_dict=opportunity_stats)
 
-    with scoring_kpis_cols[2]:
+    with st.container():
         make_cards_from_stats(player = player,
                               stat_category='Advanced',
                               stat_dict=advanced_stats)

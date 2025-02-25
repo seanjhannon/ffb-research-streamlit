@@ -16,9 +16,38 @@ if "player_details" not in st.session_state:
         {"name": "Olamide Zaccheaus", "position": "WR"},
     ])
 
+player_data = st.session_state.player_details["players"][0]["tables"]["player_data"]
+
+continer1 = st.container(border=True)
+with continer1:
+    container1_cols = st.columns([1,1,3])
+    with container1_cols[0]:
+        st.image(player_data["headshot_url"].iloc[0], use_container_width=True)
+        st.write("Cumanders, WR1")
+
+    with container1_cols[1]:
+        selectas.year_selector("player_details")
+        selectas.player_selector("player_details")
+
+        selectas.week_selector("player_details")
+    with container1_cols[2]:
+        kpi.player_kpis("player_details",0)
+
+
+
+
+
+
+
+
+
+
+
+
 # st.write(st.session_state.player_details)
 header_container = st.container(border=True)
 player_data = st.session_state.player_details["players"][0]["tables"]["player_data"]
+
 
 with header_container:
     header_cols = st.columns(2)
