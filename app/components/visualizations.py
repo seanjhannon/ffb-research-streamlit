@@ -4,6 +4,59 @@ import numpy as np
 import plotly.graph_objects as go
 
 
+def stat_radar_2(page_key, player_index=0):
+    state = getattr(st.session_state, page_key)
+    player = state["players"][player_index]
+    points_by_stat = player["tables"]["player_points_by_stat"]
+    nonzero_points_series = points_by_stat[points_by_stat != 0]
+
+    if nonzero_points_series.sum() == 0:
+        st.warning("No points scored in this period.")
+        return
+
+    categories = nonzero_points_series.index.tolist()
+    values = nonzero_points_series.values.tolist()
+
+    # Close the shape for a FIFA-style hex effect
+    categories.append(categories[0])
+    values.append(values[0])
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatterpolar(
+        r=values,
+        theta=categories,
+        fill='toself',
+        line=dict(color="#FFD700", width=2),
+        marker=dict(size=4, color="#FFD700"),
+        hoverinfo="text",
+        text=[f"{cat}: {val}" for cat, val in zip(categories, values)]
+    ))
+
+    fig.update_layout(
+        autosize=True,  # Allows Streamlit to properly resize
+        width=250,  # Adjust width for compact fit
+        height=250,  # Keep height in proportion
+        margin=dict(l=20, r=20, t=20, b=20),  # Tight margins to prevent cut-off
+        polar=dict(
+            bgcolor="#1E1E1E",
+            radialaxis=dict(
+                visible=True,
+                showticklabels=False,
+                gridcolor="rgba(255,255,255,0.2)"
+            ),
+            angularaxis=dict(
+                showline=False,
+                gridcolor="rgba(255,255,255,0.2)"
+            )
+        ),
+        showlegend=False,
+        template="plotly_dark"
+    )
+
+    # Use st.plotly_chart instead of st.write for better scaling
+    st.plotly_chart(fig, use_container_width=True)
+
+
 def stat_radar(page_key, player_index=0):
     state = getattr(st.session_state, page_key)
     player = state["players"][player_index]

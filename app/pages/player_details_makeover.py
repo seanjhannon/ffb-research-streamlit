@@ -20,48 +20,27 @@ player_data = st.session_state.player_details["players"][0]["tables"]["player_da
 
 continer1 = st.container(border=True)
 with continer1:
-    container1_cols = st.columns([1,1,3])
+    container1_cols = st.columns([1,2,2])
     with container1_cols[0]:
         st.image(player_data["headshot_url"].iloc[0], use_container_width=True)
-        st.write("Cumanders, WR1")
+        selectas.player_selector("player_details", label_visibility='collapsed')
+        # st.write("Cumanders, WR1")
 
     with container1_cols[1]:
-        selectas.year_selector("player_details")
-        selectas.player_selector("player_details")
+        viz.stat_radar_2("player_details")
 
-        selectas.week_selector("player_details")
     with container1_cols[2]:
-        kpi.player_kpis("player_details",0)
-
-
-
-
-
-
-
-
-
-
-
-
-# st.write(st.session_state.player_details)
-header_container = st.container(border=True)
-player_data = st.session_state.player_details["players"][0]["tables"]["player_data"]
-
-
-with header_container:
-    header_cols = st.columns(2)
-    with header_cols[0]:
-        st.image(player_data["headshot_url"].iloc[0])
-        st.subheader(player_data["player_display_name"].iloc[0])
-    # with header_cols[1]:
-
-
-    with header_cols[1]:
         selectas.format_selector("player_details")
         selectas.year_selector("player_details")
-        selectas.player_selector("player_details")
         selectas.week_selector("player_details")
+
+
+
+
+st.write(player_data)
+
+
+
 
 
 scoring_kpis_container = st.container(border=True)
