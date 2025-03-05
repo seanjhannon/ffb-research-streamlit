@@ -24,23 +24,36 @@ with selector_container:
 comparison_columns = st.columns(2)
 
 with comparison_columns[0]:
-
-    selectas.player_selector("player_comparison", 0)
-
     player_data = st.session_state.player_comparison["players"][0]["tables"]["player_data"]
     player_comp_header = st.container(border=True)
     with player_comp_header:
-        player_comp_header_cols = st.columns([1,3])
+        player_comp_header_cols = st.columns([2,3])
         with player_comp_header_cols[0]:
             st.image(player_data["headshot_url"].iloc[0])
-        with player_comp_header_cols[1]:
-            with st.container():
-                st.write(player_data["position"].iloc[0])
-            with st.container():
-                st.write(player_data["player_display_name"].iloc[0])
+            selectas.player_selector("player_comparison", 0, label_visibility='collapsed')
 
+        with player_comp_header_cols[1]:
+            viz.stat_radar_2("player_comparison", 0)
 
 with comparison_columns[1]:
-    selectas.player_selector("player_comparison", 1)
+    player_data = st.session_state.player_comparison["players"][1]["tables"]["player_data"]
+    player_comp_header = st.container(border=True)
+    with player_comp_header:
+        player_comp_header_cols = st.columns([3, 2])
 
-    st.write(st.session_state.player_comparison["players"][1]["tables"]["player_data"])
+        with player_comp_header_cols[0]:
+            viz.stat_radar_2("player_comparison", 1)
+
+        with player_comp_header_cols[1]:
+            st.image(player_data["headshot_url"].iloc[0])
+            selectas.player_selector("player_comparison", 1, label_visibility='collapsed')
+
+kpi_comparison_columns = st.columns([3,1,3])
+with kpi_comparison_columns[0]:
+    st.container(border=True)
+
+with kpi_comparison_columns[1]:
+    st.container(border=True)
+
+with kpi_comparison_columns[2]:
+    st.container(border=True)
