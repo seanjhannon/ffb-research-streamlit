@@ -1,26 +1,43 @@
 import numpy as np
 import streamlit as st
 
-def kpi_card(name: str, value, rank: int):
-    """Display a compact KPI card with minimal spacing."""
+def kpi_card(name: str, total_value, avg_value, total_rank, avg_rank):
+    """Compact KPI card showing Total and Average side by side."""
 
-    if isinstance(value, np.float32):
-        value = round(float(value), 2)
+    if isinstance(total_value, np.float32):
+        total_value = round(float(total_value), 2)
+    if isinstance(avg_value, np.float32):
+        avg_value = round(float(avg_value), 2)
 
-    rank_color = "🟢" if rank <= 10 and value > 0 else "⚪"
+    # Conditional coloring for rank
+    def rank_color(rank):
+        return "🟢" if rank <= 10 else "⚪"
 
     st.markdown(
         f"""
         <div style="
             text-align: center;
             font-size: 0.9em;
-            padding: 4px;
+            padding: 6px;
             border-radius: 8px;
             background-color: rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         ">
-            <strong>{name}</strong><br>
-            <span style="font-size: 1.4em; font-weight: bold;">{value}</span><br>
-            <small>Rank {rank} {rank_color}</small>
+            <strong>{name}</strong>
+            <div style="display: flex; justify-content: space-between; width: 100%; margin-top: 4px;">
+                <div style="text-align: center; width: 50%;">
+                    <small>📊 Total</small><br>
+                    <span style="font-size: 1.2em; font-weight: bold;">{total_value}</span><br>
+                    <small>Rank {total_rank} {rank_color(total_rank)}</small>
+                </div>
+                <div style="text-align: center; width: 50%;">
+                    <small>📉 Avg</small><br>
+                    <span style="font-size: 1.2em; font-weight: bold;">{avg_value}</span><br>
+                    <small>Rank {avg_rank} {rank_color(avg_rank)}</small>
+                </div>
+            </div>
         </div>
         """,
         unsafe_allow_html=True
@@ -28,14 +45,14 @@ def kpi_card(name: str, value, rank: int):
 
 
 def make_cards_from_stats(player, stat_category: str, stat_dict):
-    """Render KPIs in a tight, multi-row layout."""
+    """Render KPIs in a compact grid with totals and averages side by side."""
     if not stat_dict:
         return
 
     st.markdown(f"<h4 style='margin-bottom: 4px;'>{stat_category}</h4>", unsafe_allow_html=True)
 
     keys = list(stat_dict.keys())
-    cols_per_row = 4  # More dense than before
+    cols_per_row = 5  # Maintain dense layout
 
     rows = [keys[i:i + cols_per_row] for i in range(0, len(keys), cols_per_row)]
 
@@ -46,23 +63,22 @@ def make_cards_from_stats(player, stat_category: str, stat_dict):
     player_averages_ranks = tables["position_ranks_averages"].query("player_display_name == @player['name']")
 
     for row in rows:
-        cols = st.columns(len(row))  # Ensure tight layout
+        cols = st.columns(len(row))  # Keep the tight layout
 
         for col, key in zip(cols, row):
             label = stat_dict[key]
-            if label.startswith("Average"):
-                stat_value = round(player_averages[key], 2)
-                rank = player_averages_ranks[key]
-            else:
-                stat_value = round(player_totals[key], 2)
-                rank = player_totals_ranks[key]
+            total_value = round(player_totals[key], 2)
+            total_rank = player_totals_ranks[key].iloc[0]
+
+            avg_value = round(player_averages[key], 2)
+            avg_rank = player_averages_ranks[key].iloc[0]
 
             with col:
-                kpi_card(label, value=stat_value, rank=rank.iloc[0])
+                kpi_card(label, total_value, avg_value, total_rank, avg_rank)
 
 
 def player_kpis(page_key, player_index=0):
-    """Render all KPI sections with tighter spacing."""
+    """Render all KPI sections in a dense layout with total & average values."""
     state = getattr(st.session_state, page_key)
     player = state["players"][player_index]
     scoring_stats, opportunity_stats, advanced_stats = get_position_kpis(player['position'])
@@ -79,24 +95,29 @@ def player_kpis(page_key, player_index=0):
 
 def get_position_kpis(position:str):
     if position in [ 'WR', 'TE']:
-        scoring_stats = {
+        production_stats = {
             'calc_fantasy_points': 'Fantasy Points',
             'receiving_yards': 'Receiving Yards',
             'receiving_tds': 'Receiving TDs',
-            'receptions': 'Receptions'
+            'receptions': 'Receptions',
+            'receiving_yards_after_catch': 'YAC'
+
         }
         opportunity_stats = {
+
+            'target_share': 'Target Share',
+            'air_yards_share': 'Air Yards Share',
+            'wopr': 'WOPR',
             'targets': 'Targets',
-            'target_share': 'Average Target Share',
-            'air_yards_share': 'Average Air Yards Share',
-            'wopr': 'WOPR'
+            'receiving_air_yards': 'Air Yards',
+
         }
         advanced_stats = {
             'receiving_epa': 'Receiving EPA',
             'racr': 'RACR'
         }
     elif position == 'RB':
-        scoring_stats = {
+        production_stats = {
             'calc_fantasy_points': 'Fantasy Points',
             'rushing_yards': 'Rushing Yards',
             'rushing_tds': 'Rushing TDs',
@@ -111,7 +132,7 @@ def get_position_kpis(position:str):
             'rushing_epa': 'Average Rushing EPA',
         }
     else : #position is QB
-        scoring_stats = {
+        production_stats = {
             'calc_fantasy_points': 'Fantasy Points',
             'passing_yards': 'Passing Yards',
             'passing_tds': 'Passing TDs',
@@ -128,7 +149,7 @@ def get_position_kpis(position:str):
             'pacr': 'PACR'
         }
 
-    return scoring_stats, opportunity_stats, advanced_stats
+    return production_stats, opportunity_stats, advanced_stats
 
 #
 # def make_cards_from_stats(state,
