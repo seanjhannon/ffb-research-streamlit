@@ -1,47 +1,31 @@
 import numpy as np
 import streamlit as st
 
-def kpi_card(name: str, total_value, avg_value, total_rank, avg_rank):
-    """Compact KPI card showing Total and Average side by side."""
+
+def kpi_card(name: str, total_value, avg_value, total_rank, avg_rank, display_mode: str):
+    """KPI card showing either Total, Average, or a toggleable view."""
+    unique_id = name
 
     if isinstance(total_value, np.float32):
         total_value = round(float(total_value), 2)
     if isinstance(avg_value, np.float32):
         avg_value = round(float(avg_value), 2)
 
-    # Conditional coloring for rank
     def rank_color(rank):
         return "🟢" if rank <= 10 else "⚪"
 
-    st.markdown(
-        f"""
-        <div style="
-            text-align: center;
-            font-size: 0.9em;
-            padding: 6px;
-            border-radius: 8px;
-            background-color: rgba(255, 255, 255, 0.05);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        ">
-            <strong>{name}</strong>
-            <div style="display: flex; justify-content: space-between; width: 100%; margin-top: 4px;">
-                <div style="text-align: center; width: 50%;">
-                    <small>📊 Total</small><br>
-                    <span style="font-size: 1.2em; font-weight: bold;">{total_value}</span><br>
-                    <small>Rank {total_rank} {rank_color(total_rank)}</small>
-                </div>
-                <div style="text-align: center; width: 50%;">
-                    <small>📉 Avg</small><br>
-                    <span style="font-size: 1.2em; font-weight: bold;">{avg_value}</span><br>
-                    <small>Rank {avg_rank} {rank_color(avg_rank)}</small>
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    if display_mode == "both":
+        show_total = st.toggle("Show Total", value=True, key=f"toggle_{unique_id}")
+    else:
+        show_total = display_mode == "total"
+
+
+    if show_total:
+        st.metric(label=f"Total {name} ", value=total_value, delta=f"Rank {total_rank} ", delta_color="off")
+    else:
+        st.metric(label=f"Avg {name}", value=avg_value, delta=f"Rank {avg_rank} {rank_color(avg_rank)}")
+
+
 
 
 def make_cards_from_stats(player, stat_category: str, stat_dict):
@@ -74,7 +58,7 @@ def make_cards_from_stats(player, stat_category: str, stat_dict):
             avg_rank = player_averages_ranks[key].iloc[0]
 
             with col:
-                kpi_card(label, total_value, avg_value, total_rank, avg_rank)
+                kpi_card(label, total_value, avg_value, total_rank, avg_rank, 'both')
 
 
 def player_kpis(page_key, player_index=0):

@@ -37,7 +37,7 @@ with continer1:
 
 
 
-# st.write(player_data)
+st.write(player_data)
 
 
 
