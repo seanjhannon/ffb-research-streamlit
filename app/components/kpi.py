@@ -6,24 +6,29 @@ def kpi_card(name: str, total_value, avg_value, total_rank, avg_rank, display_mo
     """KPI card showing either Total, Average, or a toggleable view."""
     unique_id = name
 
+    # Ensure values are properly rounded
     if isinstance(total_value, np.float32):
         total_value = round(float(total_value), 2)
     if isinstance(avg_value, np.float32):
         avg_value = round(float(avg_value), 2)
 
-    def rank_color(rank):
-        return "🟢" if rank <= 10 else "⚪"
+    def top_10(rank):
+        return "-" if rank <= 10 else ""
 
-    if display_mode == "both":
-        show_total = st.toggle("Show Total", value=True, key=f"toggle_{unique_id}")
-    else:
-        show_total = display_mode == "total"
+    with st.container(border=True):  # Ensures uniform spacing
+        toggle_placeholder = st.empty()  # Ensures the toggle space is always reserved
 
+        if display_mode == "both":
+            show_total = toggle_placeholder.toggle("Show Total", value=True, key=f"toggle_{unique_id}")
+        else:
+            toggle_placeholder.markdown("⠀")
+            show_total = display_mode == "total"
 
-    if show_total:
-        st.metric(label=f"Total {name} ", value=total_value, delta=f"Rank {total_rank} ", delta_color="off")
-    else:
-        st.metric(label=f"Avg {name}", value=avg_value, delta=f"Rank {avg_rank} {rank_color(avg_rank)}")
+        # Keep KPI metric inside the same container
+        if show_total:
+            st.metric(label=f"Total {name}", value=total_value, delta=f"Rank {total_rank}", delta_color="off")
+        else:
+            st.metric(label=f"Avg {name}", value=avg_value, delta=f"Rank {avg_rank}", delta_color="off")
 
 
 
@@ -33,7 +38,7 @@ def make_cards_from_stats(player, stat_category: str, stat_dict):
     if not stat_dict:
         return
 
-    st.markdown(f"<h4 style='margin-bottom: 4px;'>{stat_category}</h4>", unsafe_allow_html=True)
+    # st.markdown(f"<h4 style='margin-bottom: 4px;'>{stat_category}</h4>", unsafe_allow_html=True)
 
     keys = list(stat_dict.keys())
     cols_per_row = 5  # Maintain dense layout
@@ -50,7 +55,8 @@ def make_cards_from_stats(player, stat_category: str, stat_dict):
         cols = st.columns(len(row))  # Keep the tight layout
 
         for col, key in zip(cols, row):
-            label = stat_dict[key]
+            label = stat_dict[key][0]
+            display_mode = stat_dict[key][1]
             total_value = round(player_totals[key], 2)
             total_rank = player_totals_ranks[key].iloc[0]
 
@@ -58,7 +64,7 @@ def make_cards_from_stats(player, stat_category: str, stat_dict):
             avg_rank = player_averages_ranks[key].iloc[0]
 
             with col:
-                kpi_card(label, total_value, avg_value, total_rank, avg_rank, 'both')
+                kpi_card(label, total_value, avg_value, total_rank, avg_rank, display_mode)
 
 
 def player_kpis(page_key, player_index=0):
@@ -80,25 +86,25 @@ def player_kpis(page_key, player_index=0):
 def get_position_kpis(position:str):
     if position in [ 'WR', 'TE']:
         production_stats = {
-            'calc_fantasy_points': 'Fantasy Points',
-            'receiving_yards': 'Receiving Yards',
-            'receiving_tds': 'Receiving TDs',
-            'receptions': 'Receptions',
-            'receiving_yards_after_catch': 'YAC'
+            'calc_fantasy_points': ('Fantasy Points', 'both'), # continue for all
+            'receiving_yards': ('Receiving Yards', 'both'),
+            'targets': ('Targets', 'both'),
+            'receiving_yards_after_catch': ('YAC', 'both'),
+            'receiving_epa': ('Receiving EPA', 'avg')
 
         }
         opportunity_stats = {
-
-            'target_share': 'Target Share',
-            'air_yards_share': 'Air Yards Share',
-            'wopr': 'WOPR',
-            'targets': 'Targets',
-            'receiving_air_yards': 'Air Yards',
+            'receiving_tds': ('Receiving TDs', 'both'),
+            'receptions': ('Receptions', 'both'),
+            'target_share': ('Target Share', 'avg'),
+            'receiving_air_yards': ('Air Yards', 'both'),
+            'wopr': ('WOPR', 'avg'),
+            # 'air_yards_share': 'Air Yards Share',
 
         }
         advanced_stats = {
-            'receiving_epa': 'Receiving EPA',
-            'racr': 'RACR'
+
+            # 'racr': 'RACR'
         }
     elif position == 'RB':
         production_stats = {

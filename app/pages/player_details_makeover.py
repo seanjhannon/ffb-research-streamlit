@@ -17,14 +17,21 @@ if "player_details" not in st.session_state:
     ])
 
 player_data = st.session_state.player_details["players"][0]["tables"]["player_data"]
+team = player_data.sort_values("week", ascending=False)['recent_team'].iloc[0]
 
-continer1 = st.container(border=True)
-with continer1:
+player_name = st.session_state.player_details["players"][0]["name"]
+player_position = st.session_state.player_details["players"][0]["position"]
+position_rank = st.session_state.player_details["players"][0]["tables"]['position_ranks_totals'].query(
+                    "player_display_name == @player_name")['calc_fantasy_points'].iloc[0]
+
+container1 = st.container(border=True)
+with container1:
     container1_cols = st.columns([1,2,2])
     with container1_cols[0]:
         st.image(player_data["headshot_url"].iloc[0], use_container_width=True)
+        st.subheader(f"{player_position}{int(position_rank)}, {team}")
         selectas.player_selector("player_details", label_visibility='collapsed')
-        # st.write("Cumanders, WR1")
+
 
     with container1_cols[1]:
         viz.stat_radar_2("player_details")
@@ -33,15 +40,6 @@ with continer1:
         selectas.format_selector("player_details")
         selectas.year_selector("player_details")
         selectas.week_selector("player_details")
-
-
-
-
-st.write(player_data)
-
-
-
-
 
 scoring_kpis_container = st.container(border=True)
 with scoring_kpis_container:
