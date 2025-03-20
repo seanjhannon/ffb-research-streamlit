@@ -1,123 +1,62 @@
 import numpy as np
 import streamlit as st
 
-def get_position_kpis(position:str):
-    if position in [ 'WR', 'TE']:
-        scoring_stats = {
-            'calc_fantasy_points': 'Fantasy Points',
-            'receiving_yards': 'Receiving Yards',
-            'receiving_tds': 'Receiving TDs',
-            'receptions': 'Receptions'
-        }
-        opportunity_stats = {
-            'targets': 'Targets',
-            'target_share': 'Average Target Share',
-            'air_yards_share': 'Average Air Yards Share',
-            'wopr': 'WOPR'
-        }
-        advanced_stats = {
-            'receiving_epa': 'Receiving EPA',
-            'racr': 'RACR'
-        }
-    elif position == 'RB':
-        scoring_stats = {
-            'calc_fantasy_points': 'Fantasy Points',
-            'rushing_yards': 'Rushing Yards',
-            'rushing_tds': 'Rushing TDs',
-            'receiving_yards': 'Receiving Yards',
-            'receiving_tds': 'Receiving TDs',
-        }
-        opportunity_stats = {
-            'carries': 'Carries',
-            'targets': 'Targets',
-        }
-        advanced_stats = {
-            'rushing_epa': 'Average Rushing EPA',
-        }
-    else : #position is QB
-        scoring_stats = {
-            'calc_fantasy_points': 'Fantasy Points',
-            'passing_yards': 'Passing Yards',
-            'passing_tds': 'Passing TDs',
-            'rushing_yards': 'Rushing Yards',
-            'rushing_tds': 'Rushing TDs',
-        }
-        opportunity_stats = {
-            'attempts': 'Attempts',
-            'passing_air_yards': 'Air Yards',
-            'carries': 'Carries'
-        }
-        advanced_stats = {
-            'passing_epa': 'Average Passing EPA',
-            'pacr': 'PACR'
-        }
-
-    return scoring_stats, opportunity_stats, advanced_stats
+import numpy as np
+import streamlit as st
 
 
-def make_cards_from_stats(state,
-                          stat_category: str,
-                          stat_dict):
+def kpi_card(player_name:str, stat_label: str, total_value, avg_value, total_rank, avg_rank, display_mode: str,
+             comp_total=None, comp_avg=None):
+    """KPI card showing either Total, Average, or a toggleable view."""
+    unique_id = player_name + stat_label
 
-    selected_player_name = state["user_input"]["selected_player"]["name"]
-    # Render the category header
-    st.markdown(f"<h2 style='text-align: center;'>{stat_category}</h2>", unsafe_allow_html=True)
-    # Return early if there are no stats to display
-    if not stat_dict:
-        return
+    # Ensure values are properly rounded
+    if isinstance(total_value, np.float32):
+        total_value = round(float(total_value), 2)
+    if isinstance(avg_value, np.float32):
+        avg_value = round(float(avg_value), 2)
 
-    # Convert the dictionary keys to a list for predictable ordering
-    keys = list(stat_dict.keys())
+    with st.container(border=True):  # Ensures uniform spacing
 
-    tables = state["tables"]
-    player_totals = tables["player_stat_totals"]
-    player_totals_ranks = tables["position_ranks_totals"].query("player_display_name == @selected_player_name")
-    player_averages = tables["player_stat_averages"]
-    player_averages_ranks = tables["position_ranks_averages"].query("player_display_name == @selected_player_name")
+        toggle_placeholder = st.empty()  # Ensures the toggle space is always reserved
 
-    # Decide the number of cards per row:
-    # - If there are more than 3 stats, use 3 per row.
-    # - Otherwise, use all available stats in one row.
-    chunk_size = 3 if len(keys) > 3 else len(keys)
+        if display_mode == "both":
+            show_total = toggle_placeholder.toggle("Show Total", value=True, key=f"toggle_{unique_id}")
+        else:
+            toggle_placeholder.markdown("⠀")
+            show_total = display_mode == "total"
 
-    # Process the keys in chunks so that each chunk represents one row of cards
-    for i in range(0, len(keys), chunk_size):
-        chunk_keys = keys[i:i + chunk_size]
-        # Create columns based on the number of stats in this chunk
-        cols = st.columns(len(chunk_keys))
-
-        # Render each card in its corresponding column
-        for col, key in zip(cols, chunk_keys):
-            label = stat_dict[key]
-            # Choose the value based on whether the label starts with "Average"
-            if label.startswith("Average"):
-                stat_value = round(player_averages[key], 2)
-                rank = player_averages_ranks[key]
+        if show_total: #TOTAL STATS
+            # if comparison mode
+            if comp_total:
+                delta_val = np.round(total_value - comp_total, 2)
+                st.metric(label=f"Total {stat_label}",
+                          value=total_value,
+                          delta=f"{delta_val} (Rank {int(total_rank)})",
+                          delta_color= "normal")
             else:
-                stat_value = round(player_totals[key], 2)
-                rank = player_totals_ranks[key]
+                st.metric(label=f"Total {stat_label}", value=total_value, delta=f"Rank {int(total_rank)}", delta_color="off")
+        else: #AVERAGE STATS
+            if comp_avg:
+                delta_val = np.round(avg_value - comp_avg)
+                st.metric(label=f"Avg {stat_label}",
+                          value=avg_value,
+                          delta=f"{delta_val} (Rank {int(avg_rank)})",
+                          delta_color="normal")
+            else:
+                st.metric(label=f"Avg {stat_label}", value=avg_value, delta=f"Rank {int(avg_rank)}", delta_color="off")
 
-            with col:
-                kpi_card(
-                    label,
-                    value=stat_value,
-                    rank=rank.iloc[0]  # Adjust as needed if the data structure changes
-                )
 
 
-
-def make_cards_from_stats(player,
-                          stat_category: str,
-                          stat_dict):
-
-    # Render the category header
-    st.markdown(f"<h2 style='text-align: center;'>{stat_category}</h2>", unsafe_allow_html=True)
-    # Return early if there are no stats to display
+def make_cards_from_stats(player, stat_dict, comp_player=None):
+    """Render KPIs in a compact grid with totals and averages side by side."""
     if not stat_dict:
         return
 
-    # Convert the dictionary keys to a list for predictable ordering
     keys = list(stat_dict.keys())
+    cols_per_row = 5 if comp_player is None else 3 # Maintain dense layout
+
+    rows = [keys[i:i + cols_per_row] for i in range(0, len(keys), cols_per_row)]
 
     tables = player["tables"]
     player_totals = tables["player_stat_totals"]
@@ -125,88 +64,94 @@ def make_cards_from_stats(player,
     player_averages = tables["player_stat_averages"]
     player_averages_ranks = tables["position_ranks_averages"].query("player_display_name == @player['name']")
 
-    # Decide the number of cards per row:
-    # - If there are more than 3 stats, use 3 per row.
-    # - Otherwise, use all available stats in one row.
-    chunk_size = 3 if len(keys) > 3 else len(keys)
+    if comp_player: # get just the ranks for comparison
+        comp_tables = comp_player["tables"]
+        comp_player_totals = comp_tables["player_stat_totals"]
+        comp_player_averages = comp_tables["player_stat_averages"]
 
-    # Process the keys in chunks so that each chunk represents one row of cards
-    for i in range(0, len(keys), chunk_size):
-        chunk_keys = keys[i:i + chunk_size]
-        # Create columns based on the number of stats in this chunk
-        cols = st.columns(len(chunk_keys))
+    for row in rows:
+        cols = st.columns(len(row))
 
-        # Render each card in its corresponding column
-        for col, key in zip(cols, chunk_keys):
-            label = stat_dict[key]
-            # Choose the value based on whether the label starts with "Average"
-            if label.startswith("Average"):
-                stat_value = round(player_averages[key], 2)
-                rank = player_averages_ranks[key]
+        for col, key in zip(cols, row):
+            label = stat_dict[key][0]
+            display_mode = stat_dict[key][1]
+            total_value = round(player_totals[key], 2)
+            total_rank = player_totals_ranks[key].iloc[0]
+
+            avg_value = round(player_averages[key], 2)
+            avg_rank = player_averages_ranks[key].iloc[0]
+
+            if comp_player:
+                comp_total = comp_player_totals[key]
+                comp_avg = comp_player_averages[key]
             else:
-                stat_value = round(player_totals[key], 2)
-                rank = player_totals_ranks[key]
+                comp_total, comp_avg = None, None
 
             with col:
-                kpi_card(
-                    label,
-                    value=stat_value,
-                    rank=rank.iloc[0]  # Adjust as needed if the data structure changes
-                )
+                kpi_card(player['name'], label, total_value, avg_value, total_rank, avg_rank, display_mode,
+                                                        comp_total, comp_avg)
 
 
-
-def player_kpis(page_key,
-                player_index=0):
-
-
+def player_kpis(page_key, player_index=0, comp_player_index=None):
+    """Render all KPI sections in a dense layout with total & average values."""
     state = getattr(st.session_state, page_key)
+
     player = state["players"][player_index]
-    scoring_stats, opportunity_stats, advanced_stats = get_position_kpis(player['position'])
+    stat_dict = get_position_kpis(player['position'])
 
-    scoring_kpis_cols = st.columns(3)
-
-    with scoring_kpis_cols[0]:
-        make_cards_from_stats(player = player,
-                              stat_category='Production',
-                              stat_dict=scoring_stats)
+    comp_player = state["players"][comp_player_index] if comp_player_index is not None else None
 
 
-    with scoring_kpis_cols[1]:
-        make_cards_from_stats(player = player,
-                              stat_category='Opportunity',
-                              stat_dict=opportunity_stats)
-
-    with scoring_kpis_cols[2]:
-        make_cards_from_stats(player = player,
-                              stat_category='Advanced',
-                              stat_dict=advanced_stats)
+    with st.container():
+        make_cards_from_stats(player, stat_dict, comp_player)
 
 
 
 
-def kpi_card(name: str, value, rank: int):
-    """
-    Display a simple KPI card using plain Markdown.
 
-    Args:
-    - name (str): The name of the KPI.
-    - value (str): The value of the KPI.
-    - rank (str): The rank of the KPI relative to the competition.
-    """
+def get_position_kpis(position:str):
+    if position in [ 'WR', 'TE']:
+        stat_dict = {
+            'calc_fantasy_points': ('Fantasy Points', 'both'), # continue for all
+            'receiving_yards': ('Receiving Yards', 'both'),
+            'targets': ('Targets', 'both'),
+            'receiving_yards_after_catch': ('YAC', 'both'),
+            'receiving_epa': ('Receiving EPA', 'avg'),
 
-    if type(value) == np.float32:
-        value = round(float(value), 2)
+            'receiving_tds': ('Receiving TDs', 'both'),
+            'receptions': ('Receptions', 'both'),
+            'target_share': ('Target Share', 'avg'),
+            'receiving_air_yards': ('Air Yards', 'both'),
+            'wopr': ('WOPR', 'avg'),
+        }
 
-    rank_color = "green" if (rank <= 10 and value > 0) else "white"
 
-    st.markdown(
-        f"""
-        <div style="text-align: center;">
-            <strong>{name}</strong><br>
-            <span style="font-size: 2em;">{value}</span><br>
-            <em> Rank: <span style='color:{rank_color};'>{int(rank)}</span> </em>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    elif position == 'RB':
+        stat_dict = {
+            'calc_fantasy_points': ('Fantasy Points', 'both'), # continue for all
+            'rushing_yards': ('Rushing Yards', 'both'),
+            'receiving_yards': ('Receiving Yards', 'both'),
+            'targets': ('Targets', 'both'),
+            # 'receiving_yards_after_catch': ('YAC', 'both'),
+            'rushing_epa': ('Rushing EPA', 'avg'),
+            'rushing_tds': ('Rushing TDs', 'both'),
+            'receiving_tds': ('Receiving TDs', 'both'),
+            'carries': ('Carries', 'both'),
+            'receptions': ('Receptions', 'both'),
+        }
+
+    else : #position is QB
+        stat_dict = {
+            'calc_fantasy_points': ('Fantasy Points', 'both'),
+            'passing_yards': ('Passing Yards', 'both'),
+            'passing_tds': ('Passing TDs', 'both'),
+            'rushing_yards': ('Rushing Yards', 'both'),
+            'rushing_tds': ('Rushing TDs', 'both'),
+           'attempts': ('Attempts', 'both'),
+            'passing_air_yards': ('Air Yards', 'both'),
+            'carries': ('Carries', 'both'),
+            'passing_epa': ('Average Passing EPA', 'avg'),
+            'pacr': ('PACR', 'avg')
+        }
+
+    return stat_dict

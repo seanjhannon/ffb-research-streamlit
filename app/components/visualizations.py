@@ -3,6 +3,122 @@ import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
 
+def stat_radar_comparison(page_key, player_indices=(0, 1)):
+    players = [st.session_state[page_key]["players"][i] for i in player_indices]
+
+    # Get points by stat for each player
+    points_by_stat_list = [p["tables"]["player_points_by_stat"] for p in players]
+
+    # Find all unique stat categories across both players
+    all_categories = set(points_by_stat_list[0].keys()) | set(points_by_stat_list[1].keys())
+
+    # Filter out stats where both players have 0
+    filtered_categories = sorted([stat for stat in all_categories
+                                  if points_by_stat_list[0].get(stat, 0) + points_by_stat_list[1].get(stat, 0) > 0])
+
+    if not filtered_categories:
+        st.warning("No relevant stats to display for comparison.")
+        return
+
+    # Extract values for the filtered categories
+    values_list = [[points_by_stat.get(stat, 0) for stat in filtered_categories] for points_by_stat in points_by_stat_list]
+
+    # Close the shape to complete the radar chart loop
+    filtered_categories.append(filtered_categories[0])
+    for values in values_list:
+        values.append(values[0])
+
+    # Define colors for players
+    colors = ["#FFD700", "#1E90FF"]  # Gold for Player 1, DodgerBlue for Player 2
+
+    fig = go.Figure()
+    for i, values in enumerate(values_list):
+        fig.add_trace(go.Scatterpolar(
+            r=values,
+            theta=filtered_categories,
+            fill='toself',
+            line=dict(color=colors[i], width=2),
+            marker=dict(size=4, color=colors[i]),
+            hoverinfo="text",
+            text=[f"{cat}: {val}" for cat, val in zip(filtered_categories, values)],
+            name=players[i]['name']
+        ))
+
+    fig.update_layout(
+        autosize=True,
+        width=300,
+        height=300,
+        margin=dict(l=20, r=20, t=20, b=20),
+        polar=dict(
+            bgcolor="#1E1E1E",
+            radialaxis=dict(visible=True, showticklabels=False, gridcolor="rgba(255,255,255,0.2)"),
+            angularaxis=dict(showline=False, gridcolor="rgba(255,255,255,0.2)")
+        ),
+        showlegend=True,
+        legend=dict(
+            orientation="h",  # Horizontal legend
+            yanchor="bottom",
+            y=1.1,  # Position above the chart
+            xanchor="center",
+            x=0.5),
+        template="plotly_dark"
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+
+def stat_radar_2(page_key, player_index=0):
+    state = getattr(st.session_state, page_key)
+    player = state["players"][player_index]
+    points_by_stat = player["tables"]["player_points_by_stat"]
+    nonzero_points_series = points_by_stat[points_by_stat != 0]
+
+    if nonzero_points_series.sum() == 0:
+        st.warning("No points scored in this period.")
+        return
+
+    categories = nonzero_points_series.index.tolist()
+    values = nonzero_points_series.values.tolist()
+
+    # Close the shape for a FIFA-style hex effect
+    categories.append(categories[0])
+    values.append(values[0])
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatterpolar(
+        r=values,
+        theta=categories,
+        fill='toself',
+        line=dict(color="#FFD700", width=2),
+        marker=dict(size=4, color="#FFD700"),
+        hoverinfo="text",
+        text=[f"{cat}: {val}" for cat, val in zip(categories, values)]
+    ))
+
+    fig.update_layout(
+        autosize=True,  # Allows Streamlit to properly resize
+        width=250,  # Adjust width for compact fit
+        height=250,  # Keep height in proportion
+        margin=dict(l=20, r=20, t=20, b=20),  # Tight margins to prevent cut-off
+        polar=dict(
+            bgcolor="#1E1E1E",
+            radialaxis=dict(
+                visible=True,
+                showticklabels=False,
+                gridcolor="rgba(255,255,255,0.2)"
+            ),
+            angularaxis=dict(
+                showline=False,
+                gridcolor="rgba(255,255,255,0.2)"
+            )
+        ),
+        showlegend=False,
+        template="plotly_dark"
+    )
+
+    # Use st.plotly_chart instead of st.write for better scaling
+    st.plotly_chart(fig, use_container_width=True)
+
 
 def stat_radar(page_key, player_index=0):
     state = getattr(st.session_state, page_key)
