@@ -1,5 +1,6 @@
 import streamlit as st
 from pandas.core.ops import comparison_op
+import components.kpi as kpi
 
 import components.visualizations as viz
 import utils.data_loader as data_loader_experimental
@@ -52,12 +53,13 @@ with comparison_columns[2]:
 with comparison_columns[1]:
     viz.stat_radar_comparison("player_comparison")
 
-kpi_comparison_columns = st.columns([3,1,3])
+kpi_comparison_columns = st.columns(2)
+
 with kpi_comparison_columns[0]:
-    st.container(border=True)
+    kpi.player_kpis("player_comparison", 0, 1)
 
 with kpi_comparison_columns[1]:
-    st.container(border=True)
+    kpi.player_kpis("player_comparison", 1, 0)
 
-with kpi_comparison_columns[2]:
-    st.container(border=True)
+
+st.write(st.session_state)
