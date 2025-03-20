@@ -3,43 +3,45 @@ import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
 
-
 def stat_radar_comparison(page_key, player_indices=(0, 1)):
-    state = getattr(st.session_state, page_key)
-    players = [state["players"][i] for i in player_indices]
-
+    players = [st.session_state[page_key]["players"][i] for i in player_indices]
 
     # Get points by stat for each player
     points_by_stat_list = [p["tables"]["player_points_by_stat"] for p in players]
 
-    # Combine all stat categories across both players
-    all_categories = set(points_by_stat_list[0].index) | set(points_by_stat_list[1].index)
+    # Find all unique stat categories across both players
+    all_categories = set(points_by_stat_list[0].keys()) | set(points_by_stat_list[1].keys())
 
-    # Ensure both players have values for all categories, filling missing ones with 0
-    values_list = []
-    for points_by_stat in points_by_stat_list:
-        values = [points_by_stat.get(cat, 0) for cat in all_categories]
-        values_list.append(values)
+    # Filter out stats where both players have 0
+    filtered_categories = sorted([stat for stat in all_categories
+                                  if points_by_stat_list[0].get(stat, 0) + points_by_stat_list[1].get(stat, 0) > 0])
 
-    # Close the shape for a FIFA-style hex effect
-    all_categories = list(all_categories)  # Convert set to list for ordered indexing
-    all_categories.append(all_categories[0])
+    if not filtered_categories:
+        st.warning("No relevant stats to display for comparison.")
+        return
+
+    # Extract values for the filtered categories
+    values_list = [[points_by_stat.get(stat, 0) for stat in filtered_categories] for points_by_stat in points_by_stat_list]
+
+    # Close the shape to complete the radar chart loop
+    filtered_categories.append(filtered_categories[0])
     for values in values_list:
         values.append(values[0])
 
+    # Define colors for players
     colors = ["#FFD700", "#1E90FF"]  # Gold for Player 1, DodgerBlue for Player 2
 
     fig = go.Figure()
     for i, values in enumerate(values_list):
         fig.add_trace(go.Scatterpolar(
             r=values,
-            theta=all_categories,
+            theta=filtered_categories,
             fill='toself',
             line=dict(color=colors[i], width=2),
             marker=dict(size=4, color=colors[i]),
             hoverinfo="text",
-            text=[f"{cat}: {val}" for cat, val in zip(all_categories, values)],
-            name=f"{players[i]['name']}"  # Adjust index to match player count
+            text=[f"{cat}: {val}" for cat, val in zip(filtered_categories, values)],
+            name=players[i]['name']
         ))
 
     fig.update_layout(
@@ -53,6 +55,12 @@ def stat_radar_comparison(page_key, player_indices=(0, 1)):
             angularaxis=dict(showline=False, gridcolor="rgba(255,255,255,0.2)")
         ),
         showlegend=True,
+        legend=dict(
+            orientation="h",  # Horizontal legend
+            yanchor="bottom",
+            y=1.1,  # Position above the chart
+            xanchor="center",
+            x=0.5),
         template="plotly_dark"
     )
 

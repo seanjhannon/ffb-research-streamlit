@@ -6,7 +6,7 @@ import streamlit as st
 
 
 def kpi_card(player_name:str, stat_label: str, total_value, avg_value, total_rank, avg_rank, display_mode: str,
-             comp_total_rank=None, comp_avg_rank=None):
+             comp_total=None, comp_avg=None):
     """KPI card showing either Total, Average, or a toggleable view."""
     unique_id = player_name + stat_label
 
@@ -15,9 +15,6 @@ def kpi_card(player_name:str, stat_label: str, total_value, avg_value, total_ran
         total_value = round(float(total_value), 2)
     if isinstance(avg_value, np.float32):
         avg_value = round(float(avg_value), 2)
-
-    def top_10(rank):
-        return "-" if rank <= 10 else ""
 
     with st.container(border=True):  # Ensures uniform spacing
 
@@ -29,26 +26,23 @@ def kpi_card(player_name:str, stat_label: str, total_value, avg_value, total_ran
             toggle_placeholder.markdown("⠀")
             show_total = display_mode == "total"
 
-        # Keep KPI metric inside the same container
-        if show_total:
-            delta_val = total_rank - comp_total_rank if comp_total_rank is not None else None
-
+        if show_total: #TOTAL STATS
             # if comparison mode
-            if comp_total_rank:
-                delta_val = total_rank - comp_total_rank
+            if comp_total:
+                delta_val = np.round(total_value - comp_total, 2)
                 st.metric(label=f"Total {stat_label}",
                           value=total_value,
-                          delta=f"{int(delta_val)} (Rank {int(total_rank)})",
-                          delta_color="inverse")
+                          delta=f"{delta_val} (Rank {int(total_rank)})",
+                          delta_color= "normal")
             else:
                 st.metric(label=f"Total {stat_label}", value=total_value, delta=f"Rank {int(total_rank)}", delta_color="off")
-        else:
-            if comp_avg_rank:
-                delta_val = total_rank - comp_avg_rank
-                st.metric(label=f"Total {stat_label}",
-                          value=total_value,
-                          delta=f"{int(delta_val)}, (Rank {int(comp_avg_rank)})",
-                          delta_color="inverse")
+        else: #AVERAGE STATS
+            if comp_avg:
+                delta_val = np.round(avg_value - comp_avg)
+                st.metric(label=f"Avg {stat_label}",
+                          value=avg_value,
+                          delta=f"{delta_val} (Rank {int(avg_rank)})",
+                          delta_color="normal")
             else:
                 st.metric(label=f"Avg {stat_label}", value=avg_value, delta=f"Rank {int(avg_rank)}", delta_color="off")
 
@@ -72,9 +66,8 @@ def make_cards_from_stats(player, stat_dict, comp_player=None):
 
     if comp_player: # get just the ranks for comparison
         comp_tables = comp_player["tables"]
-        comp_player_totals_ranks = comp_tables["position_ranks_totals"].query("player_display_name == @comp_player['name']")
-        comp_player_averages_ranks = comp_tables["position_ranks_averages"].query("player_display_name == @comp_player['name']")
-
+        comp_player_totals = comp_tables["player_stat_totals"]
+        comp_player_averages = comp_tables["player_stat_averages"]
 
     for row in rows:
         cols = st.columns(len(row))
@@ -89,14 +82,14 @@ def make_cards_from_stats(player, stat_dict, comp_player=None):
             avg_rank = player_averages_ranks[key].iloc[0]
 
             if comp_player:
-                comp_total_rank = comp_player_totals_ranks[key].iloc[0]
-                comp_avg_rank = comp_player_averages_ranks[key].iloc[0]
+                comp_total = comp_player_totals[key]
+                comp_avg = comp_player_averages[key]
             else:
-                comp_total_rank, comp_avg_rank = None, None
+                comp_total, comp_avg = None, None
 
             with col:
                 kpi_card(player['name'], label, total_value, avg_value, total_rank, avg_rank, display_mode,
-                                                        comp_total_rank, comp_avg_rank)
+                                                        comp_total, comp_avg)
 
 
 def player_kpis(page_key, player_index=0, comp_player_index=None):
