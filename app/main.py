@@ -8,7 +8,6 @@ data_loader_experimental.setup_state_main() # Create necessary state variables f
 pages = [
     st.Page("pages/custom_scoring.py", title="Custom Scoring"),
     st.Page("pages/player_details.py", title="Player Details"),
-    st.Page("pages/player_details_makeover.py", title="Player Details 2"),
     st.Page("pages/player_comparison.py", title="Compare Players"),
 
 ]

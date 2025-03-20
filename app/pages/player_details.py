@@ -16,29 +16,36 @@ if "player_details" not in st.session_state:
         {"name": "Olamide Zaccheaus", "position": "WR"},
     ])
 
-# st.write(st.session_state.player_details)
-header_container = st.container(border=True)
 player_data = st.session_state.player_details["players"][0]["tables"]["player_data"]
+team = player_data.sort_values("week", ascending=False)['recent_team'].iloc[0]
 
-with header_container:
-    header_cols = st.columns(2)
-    with header_cols[0]:
-        st.image(player_data["headshot_url"].iloc[0])
-        st.subheader(player_data["player_display_name"].iloc[0])
-    # with header_cols[1]:
+player_name = st.session_state.player_details["players"][0]["name"]
+player_position = st.session_state.player_details["players"][0]["position"]
+position_rank = st.session_state.player_details["players"][0]["tables"]['position_ranks_totals'].query(
+                    "player_display_name == @player_name")['calc_fantasy_points'].iloc[0]
 
+container1 = st.container(border=False)
+with container1:
+    container1_cols = st.columns([1,2,1])
+    with container1_cols[0]:
+        st.image(player_data["headshot_url"].iloc[0], use_container_width=True)
 
-    with header_cols[1]:
+        c = st.columns([3,2])
+        with c[0]:
+            selectas.player_selector("player_details", label_visibility='collapsed')
+        with c[1]:
+            st.subheader(f"{player_position}, {team}")
+
+    with container1_cols[1]:
+        viz.stat_radar_2("player_details")
+
+    with container1_cols[2]:
         selectas.format_selector("player_details")
         selectas.year_selector("player_details")
-        selectas.player_selector("player_details")
         selectas.week_selector("player_details")
 
-
-scoring_kpis_container = st.container(border=True)
+scoring_kpis_container = st.container(border=False)
 with scoring_kpis_container:
     kpi.player_kpis("player_details")
 
-
-viz.stat_radar("player_details")
 viz.custom_bar("player_details")
