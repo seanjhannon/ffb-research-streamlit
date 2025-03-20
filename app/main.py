@@ -6,9 +6,9 @@ st.set_page_config(page_title="FFB Research", page_icon="📊", layout="wide")
 data_loader_experimental.setup_state_main() # Create necessary state variables for boot
 
 pages = [
-    st.Page("pages/custom_scoring.py", title="Custom Scoring"),
-    st.Page("pages/player_details.py", title="Player Details"),
-    st.Page("pages/player_comparison.py", title="Compare Players"),
+    st.Page("custom_scoring.py", title="Custom Scoring"),
+    st.Page("player_details.py", title="Player Details"),
+    st.Page("player_comparison.py", title="Compare Players"),
 
 ]
 
