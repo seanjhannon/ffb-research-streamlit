@@ -29,7 +29,7 @@ with container1:
     container1_cols = st.columns([1,2,2])
     with container1_cols[0]:
         st.image(player_data["headshot_url"].iloc[0], use_container_width=True)
-        st.subheader(f"{player_position}{int(position_rank)}, {team}")
+        st.subheader(f"{player_position}, {team}")
         selectas.player_selector("player_details", label_visibility='collapsed')
 
 
@@ -45,6 +45,4 @@ scoring_kpis_container = st.container(border=True)
 with scoring_kpis_container:
     kpi.player_kpis("player_details")
 
-
-viz.stat_radar("player_details")
 viz.custom_bar("player_details")

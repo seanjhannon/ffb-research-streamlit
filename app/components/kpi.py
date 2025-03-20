@@ -16,20 +16,21 @@ def kpi_card(name: str, total_value, avg_value, total_rank, avg_rank, display_mo
         return "-" if rank <= 10 else ""
 
     with st.container(border=True):  # Ensures uniform spacing
+
+        # Keep KPI metric inside the same container
+        if display_mode == "total":
+            st.metric(label=f"Total {name}", value=total_value, delta=f"Rank {int(total_rank)}", delta_color="off")
+        else:
+            st.metric(label=f"Avg {name}", value=avg_value, delta=f"Rank {int(avg_rank)}", delta_color="off")
         toggle_placeholder = st.empty()  # Ensures the toggle space is always reserved
+
+
 
         if display_mode == "both":
             show_total = toggle_placeholder.toggle("Show Total", value=True, key=f"toggle_{unique_id}")
         else:
             toggle_placeholder.markdown("⠀")
             show_total = display_mode == "total"
-
-        # Keep KPI metric inside the same container
-        if show_total:
-            st.metric(label=f"Total {name}", value=total_value, delta=f"Rank {total_rank}", delta_color="off")
-        else:
-            st.metric(label=f"Avg {name}", value=avg_value, delta=f"Rank {avg_rank}", delta_color="off")
-
 
 
 
@@ -90,7 +91,7 @@ def get_position_kpis(position:str):
             'receiving_yards': ('Receiving Yards', 'both'),
             'targets': ('Targets', 'both'),
             'receiving_yards_after_catch': ('YAC', 'both'),
-            'receiving_epa': ('Receiving EPA', 'avg')
+            'receiving_epa': ('Receiving EPA', 'avg'),
 
         }
         opportunity_stats = {
