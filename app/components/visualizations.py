@@ -4,6 +4,61 @@ import numpy as np
 import plotly.graph_objects as go
 
 
+def stat_radar_comparison(page_key, player_indices=(0, 1)):
+    state = getattr(st.session_state, page_key)
+    players = [state["players"][i] for i in player_indices]
+
+
+    # Get points by stat for each player
+    points_by_stat_list = [p["tables"]["player_points_by_stat"] for p in players]
+
+    # Combine all stat categories across both players
+    all_categories = set(points_by_stat_list[0].index) | set(points_by_stat_list[1].index)
+
+    # Ensure both players have values for all categories, filling missing ones with 0
+    values_list = []
+    for points_by_stat in points_by_stat_list:
+        values = [points_by_stat.get(cat, 0) for cat in all_categories]
+        values_list.append(values)
+
+    # Close the shape for a FIFA-style hex effect
+    all_categories = list(all_categories)  # Convert set to list for ordered indexing
+    all_categories.append(all_categories[0])
+    for values in values_list:
+        values.append(values[0])
+
+    colors = ["#FFD700", "#1E90FF"]  # Gold for Player 1, DodgerBlue for Player 2
+
+    fig = go.Figure()
+    for i, values in enumerate(values_list):
+        fig.add_trace(go.Scatterpolar(
+            r=values,
+            theta=all_categories,
+            fill='toself',
+            line=dict(color=colors[i], width=2),
+            marker=dict(size=4, color=colors[i]),
+            hoverinfo="text",
+            text=[f"{cat}: {val}" for cat, val in zip(all_categories, values)],
+            name=f"{players[i]['name']}"  # Adjust index to match player count
+        ))
+
+    fig.update_layout(
+        autosize=True,
+        width=300,
+        height=300,
+        margin=dict(l=20, r=20, t=20, b=20),
+        polar=dict(
+            bgcolor="#1E1E1E",
+            radialaxis=dict(visible=True, showticklabels=False, gridcolor="rgba(255,255,255,0.2)"),
+            angularaxis=dict(showline=False, gridcolor="rgba(255,255,255,0.2)")
+        ),
+        showlegend=True,
+        template="plotly_dark"
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+
 def stat_radar_2(page_key, player_index=0):
     state = getattr(st.session_state, page_key)
     player = state["players"][player_index]

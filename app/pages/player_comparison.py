@@ -1,4 +1,6 @@
 import streamlit as st
+from pandas.core.ops import comparison_op
+
 import components.visualizations as viz
 import utils.data_loader as data_loader_experimental
 import components.selectas as selectas
@@ -21,32 +23,34 @@ with selector_container:
     with selector_cols[2]:
         selectas.year_selector("player_comparison")
 
-comparison_columns = st.columns(2)
+comparison_columns = st.columns([1,2,1])
+
+
+def make_player_comp_header(player_index):
+    player_data = st.session_state.player_comparison["players"][player_index]["tables"]["player_data"]
+    player_comp_header = st.container(border=True)
+    with player_comp_header:
+
+        st.image(player_data["headshot_url"].iloc[0], use_container_width=True)
+        player_position = st.session_state.player_comparison["players"][player_index]["position"]
+        team = player_data.sort_values("week", ascending=False)['recent_team'].iloc[0]
+
+        selectas.player_selector("player_comparison", player_index, label_visibility='collapsed')
+        st.subheader(f"{player_position}, {team}")
+
 
 with comparison_columns[0]:
-    player_data = st.session_state.player_comparison["players"][0]["tables"]["player_data"]
-    player_comp_header = st.container(border=True)
-    with player_comp_header:
-        player_comp_header_cols = st.columns([2,3])
-        with player_comp_header_cols[0]:
-            st.image(player_data["headshot_url"].iloc[0])
-            selectas.player_selector("player_comparison", 0, label_visibility='collapsed')
+    make_player_comp_header(0)
 
-        with player_comp_header_cols[1]:
-            viz.stat_radar_2("player_comparison", 0)
+
+with comparison_columns[2]:
+    make_player_comp_header(1)
+
+
+
 
 with comparison_columns[1]:
-    player_data = st.session_state.player_comparison["players"][1]["tables"]["player_data"]
-    player_comp_header = st.container(border=True)
-    with player_comp_header:
-        player_comp_header_cols = st.columns([3, 2])
-
-        with player_comp_header_cols[0]:
-            viz.stat_radar_2("player_comparison", 1)
-
-        with player_comp_header_cols[1]:
-            st.image(player_data["headshot_url"].iloc[0])
-            selectas.player_selector("player_comparison", 1, label_visibility='collapsed')
+    viz.stat_radar_comparison("player_comparison")
 
 kpi_comparison_columns = st.columns([3,1,3])
 with kpi_comparison_columns[0]:

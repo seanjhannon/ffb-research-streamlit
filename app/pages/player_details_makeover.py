@@ -29,9 +29,10 @@ with container1:
     container1_cols = st.columns([1,2,2])
     with container1_cols[0]:
         st.image(player_data["headshot_url"].iloc[0], use_container_width=True)
-        st.subheader(f"{player_position}, {team}")
+
         selectas.player_selector("player_details", label_visibility='collapsed')
 
+        st.subheader(f"{player_position}, {team}")
 
     with container1_cols[1]:
         viz.stat_radar_2("player_details")
