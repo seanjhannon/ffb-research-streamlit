@@ -76,3 +76,32 @@ def player_selector(page_key: str,
         on_change=data_loader.handle_player_change,
         args=(page_key, player_index,)
     )
+
+
+def xfp_toggle(page_key: str):
+    """
+    Displays a toggle for enabling/disabling XFP analysis.
+    
+    Args:
+        page_key (str): The key to identify the page's state.
+    """
+    current_state = getattr(st.session_state, page_key).get("xfp_enabled", False)
+    
+    st.toggle(
+        "Enable Expected Fantasy Points (XFP)",
+        value=current_state,
+        help="Enable advanced expected fantasy points analysis using play-by-play data. This may take longer to load.",
+        key=f"xfp_toggle_{page_key}",
+        on_change=_handle_xfp_toggle_change,
+        args=(page_key,)
+    )
+
+
+def _handle_xfp_toggle_change(page_key: str):
+    """Handle XFP toggle change."""
+    new_value = st.session_state[f"xfp_toggle_{page_key}"]
+    
+    if new_value:
+        data_loader.enable_xfp(page_key)
+    else:
+        data_loader.disable_xfp(page_key)

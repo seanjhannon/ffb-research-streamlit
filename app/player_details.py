@@ -43,6 +43,7 @@ with container1:
         selectas.format_selector("player_details")
         selectas.year_selector("player_details")
         selectas.week_selector("player_details")
+        selectas.xfp_toggle("player_details")
 
 scoring_kpis_container = st.container(border=False)
 with scoring_kpis_container:
