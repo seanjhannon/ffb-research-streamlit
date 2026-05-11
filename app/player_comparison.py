@@ -14,7 +14,7 @@ if "player_comparison" not in st.session_state:
 
 selector_container = st.container()
 with selector_container:
-    selector_cols = st.columns(3)
+    selector_cols = st.columns(4)
     with selector_cols[0]:
         selectas.format_selector("player_comparison")
 
@@ -23,6 +23,9 @@ with selector_container:
 
     with selector_cols[2]:
         selectas.year_selector("player_comparison")
+    
+    with selector_cols[3]:
+        selectas.xfp_toggle("player_comparison")
 
 comparison_columns = st.columns([1,2,1])
 

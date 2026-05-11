@@ -9,7 +9,7 @@ pages = [
     st.Page("custom_scoring.py", title="Custom Scoring"),
     st.Page("player_details.py", title="Player Details"),
     st.Page("player_comparison.py", title="Compare Players"),
-
+    st.Page("xfp_leaderboard.py", title="xFP Leaderboard"),
 ]
 
 pg = st.navigation(pages, expanded=False)
